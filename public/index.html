@@ -156,6 +156,9 @@
           </div>
           <div class="campo curto"><label>Ambiente / Local</label><input id="itLocal" placeholder="Ex.: Quarto 1"></div>
         </div>
+        <div class="linha" id="linhaDescricao" style="margin-top:10px;display:none">
+          <div class="campo"><label>Descrição do serviço / item</label><input id="itDescricao" placeholder="Ex.: Conserto da porta de vidro da recepção"></div>
+        </div>
         <div class="linha" style="margin-top:10px">
           <div class="campo curto"><label>Largura (mm)</label><input id="itLarg" type="number" value="1200" oninput="atualizarPrevia()"></div>
           <div class="campo curto"><label>Altura (mm)</label><input id="itAlt" type="number" value="1000" oninput="atualizarPrevia()"></div>
@@ -245,7 +248,7 @@
     </div>
   </div>
   <div class="cartao">
-    <h2>Preço sugerido por m² (opcional — apenas preenche a sugestão)</h2>
+    <h2>Preços sugeridos (opcional — apenas preenche a sugestão)</h2>
     <div class="linha" id="cfgPrecos"></div>
     <p style="font-size:12px;color:#888;margin-top:10px">O preço final de cada item é sempre digitado por você — a sugestão serve só como apoio. Área mínima de cálculo: 1,00 m².</p>
   </div>
@@ -310,23 +313,60 @@ function montarLogo(el, larg){
    CATÁLOGO DE PRODUTOS
 ===================================================== */
 const TIPOS = {
-  'jc2':  {nome:'Janela de Correr — 2 Folhas', folhas:2, cat:'janela', preco:650},
-  'jc3':  {nome:'Janela de Correr — 3 Folhas', folhas:3, cat:'janela', preco:700},
-  'jc4':  {nome:'Janela de Correr — 4 Folhas', folhas:4, cat:'janela', preco:750},
-  'jmax': {nome:'Janela Maxim-Ar',              folhas:1, cat:'janela', preco:600},
-  'jbas': {nome:'Janela Basculante',            folhas:1, cat:'janela', preco:550},
-  'jfix': {nome:'Janela / Painel Fixo',         folhas:1, cat:'janela', preco:450},
-  'pc2':  {nome:'Porta de Correr — 2 Folhas',   folhas:2, cat:'porta',  preco:800},
-  'pc4':  {nome:'Porta de Correr — 4 Folhas',   folhas:4, cat:'porta',  preco:850},
-  'pa1':  {nome:'Porta de Abrir — 1 Folha',     folhas:1, cat:'porta',  preco:900},
-  'pa2':  {nome:'Porta de Abrir — 2 Folhas',    folhas:2, cat:'porta',  preco:950},
-  'ppiv': {nome:'Porta Pivotante',              folhas:1, cat:'porta',  preco:1200},
+  // Janelas
+  'jc2':  {nome:'Janela de Correr — 2 Folhas',            folhas:2, cat:'janela', preco:650},
+  'jc3':  {nome:'Janela de Correr — 3 Folhas',            folhas:3, cat:'janela', preco:700},
+  'jc4':  {nome:'Janela de Correr — 4 Folhas',            folhas:4, cat:'janela', preco:750},
+  'jmax': {nome:'Janela Maxim-Ar',                         folhas:1, cat:'janela', preco:600},
+  'jbas': {nome:'Janela Basculante',                       folhas:1, cat:'janela', preco:550},
+  'jfix': {nome:'Janela / Painel Fixo',                    folhas:1, cat:'janela', preco:450},
+  'jguil':{nome:'Janela Guilhotina',                       folhas:2, cat:'janela', preco:700},
+  'jven': {nome:'Janela Veneziana de Correr — 3 Folhas',   folhas:3, cat:'janela', preco:850},
+  'tela': {nome:'Tela Mosquiteira',                        folhas:1, cat:'janela', preco:250},
+  // Portas
+  'pc2':  {nome:'Porta de Correr — 2 Folhas',              folhas:2, cat:'porta',  preco:800},
+  'pc4':  {nome:'Porta de Correr — 4 Folhas',              folhas:4, cat:'porta',  preco:850},
+  'pa1':  {nome:'Porta de Abrir — 1 Folha',                folhas:1, cat:'porta',  preco:900},
+  'pa2':  {nome:'Porta de Abrir — 2 Folhas',               folhas:2, cat:'porta',  preco:950},
+  'ppiv': {nome:'Porta Pivotante',                         folhas:1, cat:'porta',  preco:1200},
+  'pcam': {nome:'Porta Camarão (dobrável)',                folhas:4, cat:'porta',  preco:1000},
+  'plamb':{nome:'Porta de Alumínio Lambril',               folhas:1, cat:'porta',  preco:850},
+  // Box, vidros e espelhos
+  'box':  {nome:'Box de Banheiro (fixo + porta de correr)',folhas:2, cat:'vidro',  preco:750},
+  'sacada':{nome:'Fechamento de Sacada — Cortina de Vidro',folhas:6, cat:'vidro',  preco:1400},
+  'gcorpo':{nome:'Guarda-Corpo de Vidro',                  folhas:3, cat:'vidro',  preco:1100},
+  'espelho':{nome:'Espelho sob Medida',                    folhas:1, cat:'vidro',  preco:650},
+  // Serviços (preço base por unidade, sem desenho técnico)
+  'avulso':{nome:'Serviço / Item Personalizado',           folhas:0, cat:'servico', preco:100},
+  'sinst': {nome:'Instalação de Esquadria',                folhas:0, cat:'servico', preco:150},
+  'smanu': {nome:'Manutenção / Reparo de Esquadria',       folhas:0, cat:'servico', preco:120},
+  'svidro':{nome:'Troca de Vidro',                         folhas:0, cat:'servico', preco:180},
+  'sveda': {nome:'Revisão de Vedação (silicone)',          folhas:0, cat:'servico', preco:90},
 };
+
+// Tipos que não levam o marco padrão nem o vidro escolhido automaticamente
+const SEM_MARCO = new Set(['gcorpo','espelho','box','tela','sacada']);
+const SEM_VIDRO_AUTO = new Set(['espelho','tela','plamb']);
+
+function nomeItem(it){
+  return (it.tipo==='avulso' && it.desc) ? it.desc : TIPOS[it.tipo].nome;
+}
 
 /* =====================================================
    DESENHO TÉCNICO EM SVG (com cotas)
 ===================================================== */
+// Ícone genérico para serviços (não têm desenho técnico)
+function desenhoServico(maxW=250){
+  const w = Math.min(maxW, 140);
+  return `<svg viewBox="0 0 140 100" width="${w}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="8" y="6" width="124" height="74" rx="12" fill="#f4f4f5" stroke="#dcdcdf" stroke-width="2"/>
+    <text x="70" y="53" text-anchor="middle" font-size="34">🔧</text>
+    <text x="70" y="95" text-anchor="middle" font-size="12" font-weight="700" fill="#888" font-family="Arial" letter-spacing="2">SERVIÇO</text>
+  </svg>`;
+}
+
 function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
+  if ((TIPOS[tipo]||{}).cat === 'servico') return desenhoServico(maxW);
   wmm = Math.max(Number(wmm)||100, 100);
   hmm = Math.max(Number(hmm)||100, 100);
   const razao = wmm/hmm;
@@ -402,6 +442,86 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
         <rect x="${puxX}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
     }
   }
+  else if (tipo==='jguil'){
+    const fh = ih/2;
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${fh-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+      <rect x="${ix+1.5}" y="${iy+fh+1.5}" width="${iw-3}" height="${fh-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+      <g stroke="#555" stroke-width="1.4" fill="#555">
+        <line x1="${ix+iw/2}" y1="${iy+fh*0.4}" x2="${ix+iw/2}" y2="${iy+fh*1.3}"/>
+        <path d="M${ix+iw/2},${iy+fh*0.4} l-3,5 h6 z"/><path d="M${ix+iw/2},${iy+fh*1.3} l-3,-5 h6 z"/>
+      </g>`;
+  }
+  else if (tipo==='jven'){
+    const fw = iw/3;
+    for(let i=0;i<3;i++){
+      const fx = ix+i*fw;
+      if(i===1){
+        interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>` + seta(fx+fw/2, iy+ih/2, 'h');
+      } else {
+        interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
+        for(let y=iy+6; y<iy+ih-4; y+=6)
+          interno += `<line x1="${fx+3.5}" y1="${y}" x2="${fx+fw-3.5}" y2="${y}" stroke="#b6bcc2" stroke-width="1.6"/>`;
+      }
+    }
+  }
+  else if (tipo==='tela'){
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#f6f8f9" stroke="#7a7a7e" stroke-width="2.5"/>`;
+    for(let x=ix+7; x<ix+iw-3; x+=7) interno += `<line x1="${x}" y1="${iy+3}" x2="${x}" y2="${iy+ih-3}" stroke="#c9d2d8" stroke-width="0.8"/>`;
+    for(let y=iy+7; y<iy+ih-3; y+=7) interno += `<line x1="${ix+3}" y1="${y}" x2="${ix+iw-3}" y2="${y}" stroke="#c9d2d8" stroke-width="0.8"/>`;
+  }
+  else if (tipo==='pcam'){
+    const np = 4, fw = iw/np;
+    for(let i=0;i<np;i++){
+      const fx = ix+i*fw;
+      interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2"/>`;
+    }
+    let pts = '';
+    for(let i=0;i<=np;i++){
+      const px = ix+i*fw, py = iy+ih*0.5 + (i%2 ? -ih*0.12 : ih*0.12);
+      pts += (i ? 'L' : 'M')+px+','+py+' ';
+    }
+    interno += `<path d="${pts}" stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none"/>` + seta(ix+iw/2, iy+ih*0.82, 'h');
+  }
+  else if (tipo==='plamb'){
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
+    for(let y=iy+7; y<iy+ih-5; y+=7)
+      interno += `<line x1="${ix+4}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="2"/>`;
+    interno += `<g stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none">
+        <path d="M${ix+iw-2},${iy+2} L${ix+2},${iy+ih/2} L${ix+iw-2},${iy+ih-2}"/></g>
+      <rect x="${ix+iw-8}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
+  }
+  else if (tipo==='box'){
+    const fw = iw/2;
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+      <text x="${ix+fw/2}" y="${iy+ih/2+4}" text-anchor="middle" font-size="10" fill="#999" font-family="Arial">FIXO</text>
+      <rect x="${ix+fw+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>`
+      + seta(ix+fw+fw/2, iy+ih/2, 'h')
+      + `<rect x="${ix+fw+6}" y="${iy+ih*0.4}" width="3.5" height="${ih*0.2}" rx="2" fill="#3a3a3c"/>`;
+  }
+  else if (tipo==='sacada'){
+    const np = 6, fw = iw/np;
+    for(let i=0;i<np;i++){
+      const fx = ix+i*fw;
+      interno += `<rect x="${fx+1}" y="${iy+1.5}" width="${fw-2}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="1.8"/>`;
+    }
+    interno += seta(ix+iw*0.62, iy+ih/2, 'h')
+      + `<path d="M${ix+fw-2},${iy+2} L${ix+2},${iy+ih/2} L${ix+fw-2},${iy+ih-2}" stroke="#c1272d" stroke-width="1.2" stroke-dasharray="4 3" fill="none"/>`;
+  }
+  else if (tipo==='gcorpo'){
+    const np = 3, gap = 5, fw = (iw-gap*(np-1))/np;
+    for(let i=0;i<np;i++){
+      const fx = ix+i*(fw+gap);
+      interno += `<rect x="${fx}" y="${iy}" width="${fw}" height="${ih-8}" ${vidro} stroke="#7a7a7e" stroke-width="2"/>
+        <circle cx="${fx+fw*0.3}" cy="${iy+ih-3}" r="3.4" fill="#9aa0a6"/><circle cx="${fx+fw*0.7}" cy="${iy+ih-3}" r="3.4" fill="#9aa0a6"/>`;
+    }
+  }
+  else if (tipo==='espelho'){
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="url(#gvidro)" stroke="#7a7a7e" stroke-width="1.5"/>
+      <g stroke="#ffffff" stroke-width="3" opacity="0.75">
+        <line x1="${ix+iw*0.15}" y1="${iy+ih*0.85}" x2="${ix+iw*0.45}" y2="${iy+ih*0.15}"/>
+        <line x1="${ix+iw*0.3}" y1="${iy+ih*0.9}" x2="${ix+iw*0.62}" y2="${iy+ih*0.12}"/>
+      </g>`;
+  }
 
   // cotas
   const cy = y0+dh+16, cx = x0+dw+16;
@@ -437,13 +557,68 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
   const mats = [];
   const add = (item, qtd, un) => mats.push({item, qtd, un});
 
-  add(`Perfil de alumínio ${cor} — marco/contramarco`, m2(perimetro*1.05), 'm');
-  if (tipo.startsWith('jc')||tipo.startsWith('pc')){
+  // Serviços: mão de obra e materiais próprios, sem perfil de marco
+  if (t.cat === 'servico'){
+    if (tipo==='sinst'){
+      add('Mão de obra de instalação', 1, 'vb');
+      add('Materiais de fixação e vedação (buchas, parafusos, silicone)', 1, 'kit');
+    } else if (tipo==='smanu'){
+      add('Mão de obra especializada', 1, 'vb');
+      add('Peças de reposição (conforme avaliação em campo)', 1, '—');
+    } else if (tipo==='svidro'){
+      if (vidro !== 'Sem vidro') add(`Vidro ${vidro}`, m2(areaVidro || 1), 'm²');
+      add('Remoção e descarte do vidro antigo', 1, 'vb');
+      add('Vedação e calços de apoio', 1, 'kit');
+    } else if (tipo==='sveda'){
+      add('Silicone neutro', Math.max(1, Math.ceil(perimetro/6)), 'tubo');
+      add('Mão de obra', 1, 'vb');
+    }
+    return mats; // item personalizado: sem materiais fixos
+  }
+
+  if (!SEM_MARCO.has(tipo)) add(`Perfil de alumínio ${cor} — marco/contramarco`, m2(perimetro*1.05), 'm');
+  if (tipo.startsWith('jc')||tipo.startsWith('pc')||tipo==='jven'){
     add(`Perfil de alumínio ${cor} — folhas de correr`, m2(n*2*((w/n)+h)*1.05), 'm');
     add('Roldanas com rolamento', n*2, 'un');
     add('Fecho concha / fecho flush', Math.max(n-1,1), 'un');
     add('Escova de vedação (fita pelo)', m2(n*2*h + 2*w), 'm');
     add('Trilho inferior + guia superior', m2(2*w), 'm');
+    if (tipo==='jven') add(`Palhetas veneziana de alumínio ${cor}`, m2(areaVidro*2/3), 'm²');
+  } else if (tipo==='jguil'){
+    add(`Perfil de alumínio ${cor} — folhas guilhotina`, m2(2*(w+h)), 'm');
+    add('Fecho borboleta + puxadores', 1, 'kit');
+    add('Escova de vedação', m2(2*h + w), 'm');
+  } else if (tipo==='tela'){
+    add(`Perfil de tela ${cor}`, m2(perimetro), 'm');
+    add('Tela mosquiteira (fibra de vidro)', m2(areaVidro), 'm²');
+    add('Kit de fixação (roldanas, molas e feltro)', 1, 'kit');
+  } else if (tipo==='pcam'){
+    add(`Perfil de alumínio ${cor} — folhas camarão`, m2(n*2*((w/n)+h)*1.05), 'm');
+    add('Trilho superior + guia inferior', m2(2*w), 'm');
+    add('Dobradiças reforçadas', n*2, 'un');
+    add('Kit pivô e roldana do sistema camarão', 1, 'kit');
+    add('Fechadura com maçaneta', 1, 'un');
+  } else if (tipo==='plamb'){
+    add(`Perfil de alumínio ${cor} — folha de porta`, m2(2*(w+h)*1.05), 'm');
+    add(`Chapa lambril de alumínio ${cor}`, m2(areaVidro), 'm²');
+    add('Dobradiças reforçadas', 3, 'un');
+    add('Fechadura com cilindro e maçaneta', 1, 'un');
+    add('Vedação EPDM / escova', m2(perimetro), 'm');
+  } else if (tipo==='box'){
+    add('Kit box de alumínio (trilhos, roldanas, puxador e vedações)', 1, 'kit');
+    add('Perfil de acabamento e vedação PVC', m2(perimetro), 'm');
+  } else if (tipo==='sacada'){
+    add(`Perfil trilho superior/inferior ${cor}`, m2(2*w), 'm');
+    add('Kit cortina de vidro (carrinhos, pivôs e travas)', 1, 'kit');
+    add('Perfil U e vedações', m2(perimetro), 'm');
+  } else if (tipo==='gcorpo'){
+    add('Botões de fixação em aço inox', t.folhas*2, 'un');
+    add(`Perfil U de base ${cor}`, m2(w), 'm');
+    add('Silicone estrutural', 1, 'kit');
+  } else if (tipo==='espelho'){
+    add('Espelho prata 4mm', m2(areaVidro), 'm²');
+    add('Lapidação de bordas', m2(perimetro), 'm');
+    add('Fixação (botões ou fita dupla-face estrutural)', 1, 'kit');
   } else if (tipo==='jmax'){
     add(`Perfil de alumínio ${cor} — folha maxim-ar`, m2(perimetro*0.95), 'm');
     add('Braço de articulação maxim-ar (par)', 1, 'par');
@@ -463,7 +638,7 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
     add('Fechadura com cilindro e maçaneta', 1, 'un');
     add('Vedação EPDM / escova', m2(perimetro), 'm');
   }
-  if (vidro !== 'Sem vidro'){
+  if (vidro !== 'Sem vidro' && !SEM_VIDRO_AUTO.has(tipo) && tipo!=='espelho'){
     add(`Vidro ${vidro}`, m2(areaVidro), 'm²');
     add('Guarnição / baguete do vidro', m2(perimetro*0.95), 'm');
   }
@@ -535,21 +710,28 @@ function trocarAba(aba){
 ===================================================== */
 function atualizarPrevia(){
   const tipo = document.getElementById('itTipo').value;
+  const t = TIPOS[tipo];
+  const servico = t.cat === 'servico';
+  document.getElementById('linhaDescricao').style.display = tipo==='avulso' ? 'flex' : 'none';
   const w = Number(document.getElementById('itLarg').value)||0;
   const h = Number(document.getElementById('itAlt').value)||0;
   document.getElementById('previaDesenho').innerHTML = desenharEsquadria(tipo, w, h);
   const cor = document.getElementById('itCor').value;
   const vidro = document.getElementById('itVidro').value;
   const mats = calcularMateriais(tipo, w, h, cor, vidro);
-  document.getElementById('previaMat').innerHTML =
-    '<b>Materiais estimados:</b><br>' + mats.slice(0,4).map(m=>`• ${m.item}`).join('<br>') + (mats.length>4?`<br>• … e mais ${mats.length-4} itens`:'');
+  document.getElementById('previaMat').innerHTML = mats.length
+    ? '<b>Materiais estimados:</b><br>' + mats.slice(0,4).map(m=>`• ${m.item}`).join('<br>') + (mats.length>4?`<br>• … e mais ${mats.length-4} itens`:'')
+    : '<b>Materiais:</b> conforme a descrição do serviço.';
   // sugestão de preço
   const cfg = getCfg();
-  const base = (cfg.precos && cfg.precos[tipo]) || TIPOS[tipo].preco;
-  const area = Math.max((w*h)/1e6, 1);
-  const sug = area*base;
-  document.getElementById('sugestaoPreco').textContent =
-    `Sugestão: ${R$(sug)} (${area.toFixed(2).replace('.',',')} m² × ${R$(base)}/m²)`;
+  const base = (cfg.precos && cfg.precos[tipo]) || t.preco;
+  if (servico){
+    document.getElementById('sugestaoPreco').textContent = `Sugestão: ${R$(base)} (preço base do serviço)`;
+  } else {
+    const area = Math.max((w*h)/1e6, 1);
+    document.getElementById('sugestaoPreco').textContent =
+      `Sugestão: ${R$(area*base)} (${area.toFixed(2).replace('.',',')} m² × ${R$(base)}/m²)`;
+  }
 }
 
 /* =====================================================
@@ -557,19 +739,24 @@ function atualizarPrevia(){
 ===================================================== */
 function adicionarItem(){
   const tipo = document.getElementById('itTipo').value;
+  const servico = TIPOS[tipo].cat === 'servico';
   const w = Number(document.getElementById('itLarg').value);
   const h = Number(document.getElementById('itAlt').value);
   const qtd = Number(document.getElementById('itQtd').value)||1;
   let preco = Number(document.getElementById('itPreco').value);
-  if(!w || !h){ alert('Informe a largura e a altura em milímetros.'); return; }
+  if(!servico && (!w || !h)){ alert('Informe a largura e a altura em milímetros.'); return; }
+  if(tipo==='avulso' && !document.getElementById('itDescricao').value.trim()){
+    alert('Descreva o serviço/item personalizado.'); return;
+  }
   if(!preco){
     const cfg = getCfg();
     const base = (cfg.precos && cfg.precos[tipo]) || TIPOS[tipo].preco;
-    preco = Math.max((w*h)/1e6,1)*base;
+    preco = servico ? base : Math.max((w*h)/1e6,1)*base;
     if(!confirm(`Preço unitário não informado.\nUsar a sugestão de ${R$(preco)}?`)) return;
   }
   itens.push({
-    tipo, w, h, qtd, preco,
+    tipo, w: w||0, h: h||0, qtd, preco,
+    desc: document.getElementById('itDescricao').value.trim(),
     local: document.getElementById('itLocal').value,
     cor: document.getElementById('itCor').value,
     vidro: document.getElementById('itVidro').value,
@@ -578,6 +765,7 @@ function adicionarItem(){
   document.getElementById('itLocal').value='';
   document.getElementById('itObs').value='';
   document.getElementById('itPreco').value='';
+  document.getElementById('itDescricao').value='';
   renderItens();
 }
 
@@ -591,12 +779,13 @@ function renderItens(){
       <th>Desenho</th><th>Produto</th><th>Ambiente</th><th>Medidas (L×A)</th><th>Cor</th><th>Vidro</th><th>Qtd</th><th>Unitário</th><th>Subtotal</th><th></th>
     </tr></thead><tbody>`;
     itens.forEach((it,i)=>{
+      const servico = TIPOS[it.tipo].cat === 'servico';
       html += `<tr>
         <td class="mini-des">${desenharEsquadria(it.tipo, it.w, it.h, 80, 62)}</td>
-        <td><b>${TIPOS[it.tipo].nome}</b>${it.obs?`<br><small style="color:#888">${it.obs}</small>`:''}</td>
+        <td><b>${nomeItem(it)}</b>${it.obs?`<br><small style="color:#888">${it.obs}</small>`:''}</td>
         <td>${it.local||'—'}</td>
-        <td>${it.w} × ${it.h} mm</td>
-        <td>${it.cor}</td><td>${it.vidro}</td>
+        <td>${it.w&&it.h ? `${it.w} × ${it.h} mm` : '—'}</td>
+        <td>${servico ? '—' : it.cor}</td><td>${servico ? '—' : it.vidro}</td>
         <td>${it.qtd}</td><td>${R$(it.preco)}</td>
         <td><b>${R$(it.preco*it.qtd)}</b></td>
         <td><button class="btn btn-borda btn-mini" onclick="removerItem(${i})">✕</button></td>
@@ -729,7 +918,7 @@ function carregarConfig(){
   cfgPagto.value=c.pagto; cfgGarantia.value=c.garantia;
   const box = document.getElementById('cfgPrecos');
   box.innerHTML = Object.entries(TIPOS).map(([k,t])=>`
-    <div class="campo"><label>${t.nome}</label>
+    <div class="campo"><label>${t.nome}${t.cat==='servico' ? ' — base (R$)' : ' (R$/m²)'}</label>
       <input type="number" id="preco_${k}" value="${(c.precos&&c.precos[k])||t.preco}"></div>`).join('');
 }
 function salvarConfig(){
@@ -793,29 +982,33 @@ function montarPaginaPDF(o){
 
   let itensHtml = '';
   o.itens.forEach((it,i)=>{
+    const servico = TIPOS[it.tipo].cat === 'servico';
     const mats = calcularMateriais(it.tipo, it.w, it.h, it.cor, it.vidro);
+    const tabelaMat = mats.length ? `
+          <table class="mat">
+            <thead><tr><th>Materiais utilizados</th><th style="width:70px;text-align:right">Qtd</th><th style="width:40px">Un</th></tr></thead>
+            <tbody>${mats.map(m=>`<tr><td>${m.item}</td><td style="text-align:right">${m.qtd}</td><td>${m.un}</td></tr>`).join('')}</tbody>
+          </table>` : '';
     itensHtml += `
     <div class="item-orc">
       <div class="item-cab">
-        <span>ITEM ${String(i+1).padStart(2,'0')} — ${TIPOS[it.tipo].nome.toUpperCase()}${it.local?` (${it.local.toUpperCase()})`:''}</span>
+        <span>ITEM ${String(i+1).padStart(2,'0')} — ${nomeItem(it).toUpperCase()}${it.local?` (${it.local.toUpperCase()})`:''}</span>
         <span>QTD: ${it.qtd}</span>
       </div>
       <div class="item-corpo">
         <div class="item-des">
           ${desenharEsquadria(it.tipo, it.w, it.h, 210, 155)}
-          <div class="rotulo">Desenho ilustrativo — vista externa</div>
+          <div class="rotulo">${servico ? 'Serviço — sem desenho técnico' : 'Desenho ilustrativo — vista externa'}</div>
         </div>
         <div class="item-info">
           <table class="espec">
-            <tr><td>Medidas (L×A)</td><td>${it.w} × ${it.h} mm &nbsp;(${((it.w*it.h)/1e6).toFixed(2).replace('.',',')} m²)</td></tr>
+            ${servico && it.tipo==='avulso' ? `<tr><td>Descrição</td><td>${it.desc||'—'}</td></tr>` : ''}
+            ${!servico ? `<tr><td>Medidas (L×A)</td><td>${it.w} × ${it.h} mm &nbsp;(${((it.w*it.h)/1e6).toFixed(2).replace('.',',')} m²)</td></tr>
             <tr><td>Cor do alumínio</td><td>${it.cor}</td></tr>
-            <tr><td>Vidro</td><td>${it.vidro}</td></tr>
+            <tr><td>Vidro</td><td>${it.vidro}</td></tr>` : (it.w&&it.h ? `<tr><td>Medidas (L×A)</td><td>${it.w} × ${it.h} mm</td></tr>` : '')}
             ${it.obs?`<tr><td>Observações</td><td>${it.obs}</td></tr>`:''}
           </table>
-          <table class="mat">
-            <thead><tr><th>Materiais utilizados</th><th style="width:70px;text-align:right">Qtd</th><th style="width:40px">Un</th></tr></thead>
-            <tbody>${mats.map(m=>`<tr><td>${m.item}</td><td style="text-align:right">${m.qtd}</td><td>${m.un}</td></tr>`).join('')}</tbody>
-          </table>
+          ${tabelaMat}
         </div>
       </div>
       <div class="item-preco">Valor unitário: ${R$(it.preco)} &nbsp;|&nbsp; Subtotal: <strong>${R$(it.preco*it.qtd)}</strong></div>
@@ -903,8 +1096,8 @@ function pdfSalvo(id){
   document.getElementById('btnSair').style.display = 'inline-block';
   montarLogo(document.getElementById('logoTopo'), 110);
   const sel = document.getElementById('itTipo');
-  const grupos = {janela:'— JANELAS —', porta:'— PORTAS —'};
-  ['janela','porta'].forEach(cat=>{
+  const grupos = {janela:'— JANELAS —', porta:'— PORTAS —', vidro:'— BOX / VIDROS / ESPELHOS —', servico:'— SERVIÇOS —'};
+  ['janela','porta','vidro','servico'].forEach(cat=>{
     const og = document.createElement('optgroup'); og.label = grupos[cat];
     Object.entries(TIPOS).filter(([k,t])=>t.cat===cat).forEach(([k,t])=>{
       const op = document.createElement('option'); op.value=k; op.textContent=t.nome; og.appendChild(op);
