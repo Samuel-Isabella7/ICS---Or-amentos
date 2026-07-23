@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar — ICS Orçamentos</title>
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+  :root{ --vermelho:#c1272d; --cinza:#3a3a3c; --borda:#dcdcdf; }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#eceff1 0%,#dfe3e6 60%,#d4d8db 100%);
+    color:var(--cinza);padding:16px;
+  }
+  .cartao{
+    background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.14);
+    width:100%;max-width:400px;overflow:hidden;
+    animation:surgir .35s ease;
+  }
+  @keyframes surgir{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .faixa{height:6px;background:var(--vermelho)}
+  .conteudo{padding:36px 36px 30px;text-align:center}
+  .logo{margin-bottom:6px}
+  .subtitulo{font-size:13px;color:#888;margin-bottom:26px}
+  label{display:block;text-align:left;font-size:12px;font-weight:600;color:#666;margin-bottom:6px}
+  .campo-senha{position:relative;margin-bottom:8px}
+  .campo-senha input{
+    width:100%;border:1px solid var(--borda);border-radius:8px;
+    padding:12px 44px 12px 14px;font-size:15px;color:var(--cinza);
+  }
+  .campo-senha input:focus{outline:2px solid #f0b6b8;border-color:var(--vermelho)}
+  .olho{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    border:none;background:none;cursor:pointer;font-size:17px;padding:6px;color:#888;
+  }
+  .erro{
+    display:none;font-size:13px;color:#a02025;background:#fdecec;
+    border:1px solid #f5c6c8;border-radius:8px;padding:9px 12px;margin-bottom:8px;text-align:left;
+  }
+  .erro.mostrar{display:block;animation:tremer .3s}
+  @keyframes tremer{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  button.entrar{
+    width:100%;margin-top:10px;border:none;border-radius:8px;cursor:pointer;
+    background:var(--vermelho);color:#fff;font-size:15px;font-weight:700;padding:13px;
+    transition:background .15s;
+  }
+  button.entrar:hover{background:#a02025}
+  button.entrar:disabled{background:#d99a9c;cursor:wait}
+  .rodape{font-size:11px;color:#aaa;text-align:center;padding:14px;border-top:1px solid #f2f2f4}
+</style>
+</head>
+<body>
+  <div class="cartao">
+    <div class="faixa"></div>
+    <div class="conteudo">
+      <div class="logo" id="logoLogin"></div>
+      <div class="subtitulo">Sistema de Orçamentos — acesso restrito</div>
+      <form id="formLogin">
+        <label for="senha">Senha de acesso</label>
+        <div class="campo-senha">
+          <input type="password" id="senha" autocomplete="current-password" autofocus>
+          <button type="button" class="olho" onclick="alternarSenha()" title="Mostrar/ocultar senha">👁</button>
+        </div>
+        <div class="erro" id="msgErro">Senha incorreta. Tente novamente.</div>
+        <button type="submit" class="entrar" id="btnEntrar">Entrar</button>
+      </form>
+    </div>
+    <div class="rodape">ICS Esquadrias — esquadrias de alumínio e vidro</div>
+  </div>
+
+<script>
+function logoSVG(larg){
+  return `<svg viewBox="0 0 320 150" width="${larg}" xmlns="http://www.w3.org/2000/svg">
+    <g font-family="Arial, Helvetica, sans-serif" font-weight="900">
+      <g stroke="#c1272d" stroke-width="5" opacity="0.9">
+        <line x1="235" y1="28" x2="318" y2="14"/><line x1="243" y1="44" x2="318" y2="32"/>
+        <line x1="250" y1="60" x2="318" y2="50"/><line x1="256" y1="76" x2="318" y2="68"/>
+      </g>
+      <rect x="18" y="14" width="20" height="20" fill="#c1272d"/>
+      <rect x="18" y="42" width="20" height="62" fill="#3a3a3c"/>
+      <text x="44" y="104" font-size="96" fill="#3a3a3c" letter-spacing="-4">CS</text>
+      <text x="16" y="140" font-size="30" fill="#3a3a3c" font-weight="400" letter-spacing="6">ESQUADRIAS</text>
+    </g>
+  </svg>`;
+}
+// usa logo.png se existir na pasta public, senão desenha a logo
+(function(){
+  const el = document.getElementById('logoLogin');
+  const img = new Image();
+  img.src = 'logo.png'; img.style.width = '150px';
+  img.onload = ()=>{ el.innerHTML=''; el.appendChild(img); };
+  img.onerror = ()=>{ el.innerHTML = logoSVG(150); };
+})();
+
+function alternarSenha(){
+  const c = document.getElementById('senha');
+  c.type = c.type === 'password' ? 'text' : 'password';
+}
+
+document.getElementById('formLogin').addEventListener('submit', async (ev)=>{
+  ev.preventDefault();
+  const btn = document.getElementById('btnEntrar');
+  const erro = document.getElementById('msgErro');
+  erro.classList.remove('mostrar');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try{
+    const r = await fetch('/api/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ senha: document.getElementById('senha').value }),
+    });
+    if(r.ok){ location.href = '/'; return; }
+    erro.classList.add('mostrar');
+    document.getElementById('senha').select();
+  }catch(e){
+    erro.textContent = 'Não foi possível conectar ao servidor. Tente novamente.';
+    erro.classList.add('mostrar');
+  }
+  btn.disabled = false; btn.textContent = 'Entrar';
+});
+</script>
+</body>
+</html>

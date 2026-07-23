@@ -120,6 +120,7 @@
     <button class="ativa" data-aba="novo" onclick="trocarAba('novo')">➕ Novo Orçamento</button>
     <button data-aba="salvos" onclick="trocarAba('salvos')">📁 Orçamentos Salvos</button>
     <button data-aba="config" onclick="trocarAba('config')">⚙️ Configurações</button>
+    <button id="btnSair" style="display:none" onclick="sair()" title="Encerrar sessão">🚪 Sair</button>
   </nav>
 </header>
 
@@ -468,10 +469,16 @@ async function salvarServidor(){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(MEM),
     });
+    if(r.status === 401){ location.href = '/login.html'; return; } // sessão expirou
     if(!r.ok) throw new Error(r.status);
   }catch(e){
     alert('Não foi possível salvar no servidor. Verifique se o sistema está no ar e tente novamente.');
   }
+}
+
+async function sair(){
+  await fetch('/api/logout', {method:'POST'});
+  location.href = '/login.html';
 }
 
 const CFG_PADRAO = {
@@ -830,6 +837,7 @@ function pdfSalvo(id){
   // Carrega os dados do servidor antes de montar a tela
   try{
     const r = await fetch('/api/dados');
+    if(r.status === 401){ location.href = '/login.html'; return; }
     const d = await r.json();
     if(d){
       MEM.orcamentos = d.orcamentos || [];
@@ -839,6 +847,11 @@ function pdfSalvo(id){
     alert('Não foi possível carregar os dados do servidor.');
   }
   document.getElementById('btnBackup').style.display = 'inline-block';
+  // mostra o botão "Sair" apenas quando o sistema está protegido por senha
+  try{
+    const s = await (await fetch('/api/sessao')).json();
+    if(s.protegido) document.getElementById('btnSair').style.display = 'inline-block';
+  }catch(e){}
   montarLogo(document.getElementById('logoTopo'), 110);
   const sel = document.getElementById('itTipo');
   const grupos = {janela:'— JANELAS —', porta:'— PORTAS —'};
