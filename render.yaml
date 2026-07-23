@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ics-orcamentos
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: node dist/main
+    healthCheckPath: /api/saude
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SENHA_ACESSO
+        sync: false

@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICS Esquadrias — Sistema de Orçamentos</title>
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+  :root{
+    --vermelho:#c1272d;
+    --cinza:#3a3a3c;
+    --cinza-claro:#f4f4f5;
+    --borda:#dcdcdf;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+  body{background:#eceff1;color:var(--cinza)}
+
+  /* ===== TOPO ===== */
+  header.topo{background:#fff;border-bottom:4px solid var(--vermelho);padding:10px 24px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  header.topo h1{font-size:17px;color:var(--cinza);font-weight:600}
+  header.topo small{color:#888;display:block;font-weight:400}
+  nav.abas{margin-left:auto;display:flex;gap:6px}
+  nav.abas button{border:1px solid var(--borda);background:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:14px;color:var(--cinza)}
+  nav.abas button.ativa{background:var(--vermelho);border-color:var(--vermelho);color:#fff;font-weight:600}
+
+  main{max-width:1180px;margin:20px auto;padding:0 16px}
+  .painel{display:none}
+  .painel.ativa{display:block}
+
+  .cartao{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .cartao h2{font-size:15px;text-transform:uppercase;letter-spacing:.5px;color:var(--vermelho);border-bottom:2px solid var(--cinza-claro);padding-bottom:8px;margin-bottom:14px}
+
+  .linha{display:flex;flex-wrap:wrap;gap:12px}
+  .campo{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+  .campo.curto{flex:0 0 130px}
+  .campo label{font-size:12px;font-weight:600;color:#666}
+  .campo input,.campo select,.campo textarea{border:1px solid var(--borda);border-radius:6px;padding:8px 10px;font-size:14px;background:#fff;color:var(--cinza)}
+  .campo input:focus,.campo select:focus,.campo textarea:focus{outline:2px solid #f0b6b8;border-color:var(--vermelho)}
+
+  .btn{border:none;border-radius:6px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-vermelho{background:var(--vermelho);color:#fff}
+  .btn-vermelho:hover{background:#a02025}
+  .btn-cinza{background:var(--cinza);color:#fff}
+  .btn-borda{background:#fff;border:1px solid var(--borda);color:var(--cinza)}
+  .btn-mini{padding:5px 10px;font-size:12px}
+
+  /* preview do desenho no formulário */
+  .previa{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+  .previa .desenho-box{flex:0 0 320px;border:1px dashed var(--borda);border-radius:8px;padding:12px;background:#fafafa;text-align:center;min-height:240px}
+  .previa .desenho-box .titulo-des{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px}
+  .previa .form-item{flex:1;min-width:300px}
+
+  /* tabela de itens */
+  table.itens{width:100%;border-collapse:collapse;font-size:13px}
+  table.itens th{background:var(--cinza);color:#fff;padding:8px;text-align:left;font-size:12px;text-transform:uppercase}
+  table.itens td{padding:8px;border-bottom:1px solid var(--cinza-claro);vertical-align:middle}
+  table.itens tr:hover td{background:#fdf5f5}
+  .mini-des svg{display:block}
+
+  .totais{display:flex;justify-content:flex-end;gap:30px;margin-top:14px;font-size:15px;align-items:center;flex-wrap:wrap}
+  .totais .total-final{font-size:20px;font-weight:800;color:var(--vermelho)}
+
+  /* lista de orçamentos salvos */
+  table.salvos{width:100%;border-collapse:collapse;font-size:14px}
+  table.salvos th{background:var(--cinza-claro);padding:10px;text-align:left;font-size:12px;text-transform:uppercase;color:#666}
+  table.salvos td{padding:10px;border-bottom:1px solid var(--cinza-claro)}
+  .etiqueta{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700}
+  .et-aberto{background:#fff3cd;color:#856404}
+  .et-aprovado{background:#d4edda;color:#155724}
+  .et-recusado{background:#f8d7da;color:#721c24}
+
+  .vazio{text-align:center;color:#999;padding:30px;font-size:14px}
+
+  /* ===== ÁREA DE IMPRESSÃO / PDF ===== */
+  #areaImpressao{display:none}
+
+  @media print{
+    body{background:#fff}
+    header.topo,main{display:none !important}
+    #areaImpressao{display:block}
+    @page{size:A4;margin:12mm 14mm}
+  }
+  .pg{color:#222;font-size:12px;line-height:1.45}
+  .pg .cabecalho{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--vermelho);padding-bottom:10px;margin-bottom:14px}
+  .pg .dados-emp{text-align:right;font-size:11px;color:#444}
+  .pg .dados-emp strong{font-size:13px;color:var(--cinza)}
+  .pg .faixa-titulo{background:var(--cinza);color:#fff;padding:7px 12px;font-size:13px;font-weight:700;letter-spacing:1px;display:flex;justify-content:space-between;border-radius:4px;margin-bottom:12px}
+  .pg .bloco-cliente{display:flex;flex-wrap:wrap;gap:4px 26px;border:1px solid #ddd;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:12px}
+  .pg .item-orc{border:1px solid #ccc;border-radius:6px;margin-bottom:12px;page-break-inside:avoid;overflow:hidden}
+  .pg .item-orc .item-cab{background:#f0f0f2;padding:6px 10px;font-weight:700;font-size:12px;display:flex;justify-content:space-between}
+  .pg .item-corpo{display:flex;gap:14px;padding:10px}
+  .pg .item-des{flex:0 0 250px;text-align:center}
+  .pg .item-des .rotulo{font-size:9px;color:#888;text-transform:uppercase;margin-top:2px}
+  .pg .item-info{flex:1}
+  .pg table.espec{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
+  .pg table.espec td{padding:3px 6px;border-bottom:1px solid #eee}
+  .pg table.espec td:first-child{font-weight:700;color:#555;width:110px}
+  .pg table.mat{width:100%;border-collapse:collapse;font-size:10.5px}
+  .pg table.mat th{background:var(--vermelho);color:#fff;padding:4px 6px;text-align:left;font-size:10px}
+  .pg table.mat td{padding:3px 6px;border-bottom:1px solid #eee}
+  .pg .item-preco{background:#fafafa;border-top:1px solid #ddd;padding:6px 10px;text-align:right;font-size:12px}
+  .pg .item-preco strong{color:var(--vermelho);font-size:13px}
+  .pg .rodape-total{display:flex;justify-content:flex-end;margin:10px 0 16px}
+  .pg .caixa-total{border:2px solid var(--vermelho);border-radius:6px;padding:8px 16px;text-align:right;min-width:260px}
+  .pg .caixa-total .lin{display:flex;justify-content:space-between;gap:30px;font-size:12px;padding:2px 0}
+  .pg .caixa-total .lin.destaque{font-size:16px;font-weight:800;color:var(--vermelho);border-top:1px solid #ddd;margin-top:4px;padding-top:6px}
+  .pg .condicoes{font-size:11px;border:1px solid #ddd;border-radius:6px;padding:10px 12px;margin-bottom:16px}
+  .pg .condicoes h4{font-size:11px;text-transform:uppercase;color:var(--vermelho);margin-bottom:6px}
+  .pg .assinaturas{display:flex;gap:60px;margin-top:44px;text-align:center;font-size:11px}
+  .pg .assinaturas div{flex:1;border-top:1px solid #555;padding-top:5px}
+  .pg .rodape-fim{margin-top:18px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:8px}
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div id="logoTopo" style="width:110px"></div>
+  <h1>Sistema de Orçamentos<small>Esquadrias de alumínio e vidro</small></h1>
+  <nav class="abas">
+    <button class="ativa" data-aba="novo" onclick="trocarAba('novo')">➕ Novo Orçamento</button>
+    <button data-aba="salvos" onclick="trocarAba('salvos')">📁 Orçamentos Salvos</button>
+    <button data-aba="config" onclick="trocarAba('config')">⚙️ Configurações</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ================= ABA NOVO ORÇAMENTO ================= -->
+<section id="aba-novo" class="painel ativa">
+
+  <div class="cartao">
+    <h2>Dados do Cliente</h2>
+    <div class="linha">
+      <div class="campo" style="flex:2"><label>Nome / Razão Social</label><input id="cliNome" placeholder="Ex.: João da Silva"></div>
+      <div class="campo curto"><label>Telefone / WhatsApp</label><input id="cliFone" placeholder="(00) 00000-0000"></div>
+      <div class="campo curto"><label>CPF / CNPJ</label><input id="cliDoc"></div>
+    </div>
+    <div class="linha" style="margin-top:10px">
+      <div class="campo" style="flex:2"><label>Endereço da Obra</label><input id="cliEnd" placeholder="Rua, número, bairro, cidade"></div>
+      <div class="campo curto"><label>E-mail</label><input id="cliEmail"></div>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2>Adicionar Item</h2>
+    <div class="previa">
+      <div class="form-item">
+        <div class="linha">
+          <div class="campo" style="flex:2"><label>Produto</label>
+            <select id="itTipo" onchange="atualizarPrevia()"></select>
+          </div>
+          <div class="campo curto"><label>Ambiente / Local</label><input id="itLocal" placeholder="Ex.: Quarto 1"></div>
+        </div>
+        <div class="linha" style="margin-top:10px">
+          <div class="campo curto"><label>Largura (mm)</label><input id="itLarg" type="number" value="1200" oninput="atualizarPrevia()"></div>
+          <div class="campo curto"><label>Altura (mm)</label><input id="itAlt" type="number" value="1000" oninput="atualizarPrevia()"></div>
+          <div class="campo curto"><label>Quantidade</label><input id="itQtd" type="number" value="1" min="1" oninput="atualizarPrevia()"></div>
+        </div>
+        <div class="linha" style="margin-top:10px">
+          <div class="campo"><label>Cor do Alumínio</label>
+            <select id="itCor"><option>Branco</option><option>Preto</option><option>Bronze</option><option>Anodizado Fosco</option><option>Amadeirado</option></select>
+          </div>
+          <div class="campo"><label>Tipo de Vidro</label>
+            <select id="itVidro"><option>Incolor 4mm</option><option>Incolor 6mm</option><option>Fumê 4mm</option><option>Fumê 6mm</option><option>Verde 6mm</option><option>Temperado Incolor 8mm</option><option>Mini Boreal 4mm</option><option>Sem vidro</option></select>
+          </div>
+        </div>
+        <div class="linha" style="margin-top:10px">
+          <div class="campo curto"><label>Preço Unitário (R$)</label><input id="itPreco" type="number" step="0.01" placeholder="0,00"></div>
+          <div class="campo"><label>Observações do item</label><input id="itObs" placeholder="Ex.: com tela mosquiteira"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+          <button class="btn btn-vermelho" onclick="adicionarItem()">＋ Adicionar ao Orçamento</button>
+          <span id="sugestaoPreco" style="font-size:12px;color:#888"></span>
+        </div>
+      </div>
+      <div class="desenho-box">
+        <div class="titulo-des">Desenho da Esquadria (vista externa)</div>
+        <div id="previaDesenho"></div>
+        <div id="previaMat" style="text-align:left;font-size:11px;color:#666;margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2>Itens do Orçamento</h2>
+    <div id="listaItens"></div>
+    <div class="totais">
+      <div class="campo curto"><label>Desconto (R$)</label><input id="orcDesconto" type="number" step="0.01" value="0" oninput="renderItens()"></div>
+      <div>Total: <span class="total-final" id="orcTotal">R$ 0,00</span></div>
+    </div>
+    <div class="linha" style="margin-top:10px">
+      <div class="campo"><label>Observações gerais do orçamento</label><textarea id="orcObs" rows="2" placeholder="Ex.: valor inclui instalação; medidas a confirmar na obra."></textarea></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-vermelho" onclick="gerarPDF()">📄 Gerar PDF</button>
+      <button class="btn btn-cinza" onclick="salvarOrcamento()">💾 Salvar Orçamento</button>
+      <button class="btn btn-borda" onclick="novoOrcamento()">🗑 Limpar / Novo</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ================= ABA SALVOS ================= -->
+<section id="aba-salvos" class="painel">
+  <div class="cartao">
+    <h2>Orçamentos Salvos</h2>
+    <table class="salvos">
+      <thead><tr><th>Número</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Situação</th><th style="width:220px">Ações</th></tr></thead>
+      <tbody id="tabelaSalvos"></tbody>
+    </table>
+    <div id="salvosVazio" class="vazio">Nenhum orçamento salvo ainda.</div>
+  </div>
+</section>
+
+<!-- ================= ABA CONFIG ================= -->
+<section id="aba-config" class="painel">
+  <div class="cartao">
+    <h2>Dados da Empresa (aparecem no PDF)</h2>
+    <div class="linha">
+      <div class="campo" style="flex:2"><label>Nome da Empresa</label><input id="cfgNome"></div>
+      <div class="campo curto"><label>CNPJ</label><input id="cfgCnpj"></div>
+    </div>
+    <div class="linha" style="margin-top:10px">
+      <div class="campo" style="flex:2"><label>Endereço</label><input id="cfgEnd"></div>
+      <div class="campo curto"><label>Telefone / WhatsApp</label><input id="cfgFone"></div>
+      <div class="campo curto"><label>E-mail</label><input id="cfgEmail"></div>
+    </div>
+  </div>
+  <div class="cartao">
+    <h2>Condições Padrão</h2>
+    <div class="linha">
+      <div class="campo curto"><label>Validade do orçamento (dias)</label><input id="cfgValidade" type="number" value="15"></div>
+      <div class="campo curto"><label>Prazo de entrega (dias úteis)</label><input id="cfgPrazo" type="number" value="20"></div>
+    </div>
+    <div class="linha" style="margin-top:10px">
+      <div class="campo"><label>Forma de pagamento</label><input id="cfgPagto" value="50% de entrada + 50% na entrega. Aceitamos PIX, dinheiro e cartão."></div>
+    </div>
+    <div class="linha" style="margin-top:10px">
+      <div class="campo"><label>Garantia</label><input id="cfgGarantia" value="Garantia de 1 ano contra defeitos de fabricação e instalação."></div>
+    </div>
+  </div>
+  <div class="cartao">
+    <h2>Preço sugerido por m² (opcional — apenas preenche a sugestão)</h2>
+    <div class="linha" id="cfgPrecos"></div>
+    <p style="font-size:12px;color:#888;margin-top:10px">O preço final de cada item é sempre digitado por você — a sugestão serve só como apoio. Área mínima de cálculo: 1,00 m².</p>
+  </div>
+  <button class="btn btn-vermelho" onclick="salvarConfig()">💾 Salvar Configurações</button>
+  <button class="btn btn-borda" id="btnBackup" style="display:none;margin-left:8px" onclick="exportarBackup()">📦 Exportar Backup dos Dados</button>
+  <span id="cfgOk" style="margin-left:10px;color:#155724;font-weight:600"></span>
+</section>
+
+</main>
+
+<!-- ÁREA DO PDF -->
+<div id="areaImpressao"></div>
+
+<script>
+/* =====================================================
+   LOGO — usa logo.png se existir na pasta, senão desenha
+===================================================== */
+function logoSVG(larg){
+  return `<svg viewBox="0 0 320 150" width="${larg}" xmlns="http://www.w3.org/2000/svg">
+    <g font-family="Arial, Helvetica, sans-serif" font-weight="900">
+      <g stroke="#c1272d" stroke-width="5" opacity="0.9">
+        <line x1="235" y1="28" x2="318" y2="14"/><line x1="243" y1="44" x2="318" y2="32"/>
+        <line x1="250" y1="60" x2="318" y2="50"/><line x1="256" y1="76" x2="318" y2="68"/>
+      </g>
+      <rect x="18" y="14" width="20" height="20" fill="#c1272d"/>
+      <rect x="18" y="42" width="20" height="62" fill="#3a3a3c"/>
+      <text x="44" y="104" font-size="96" fill="#3a3a3c" letter-spacing="-4">CS</text>
+      <text x="16" y="140" font-size="30" fill="#3a3a3c" font-weight="400" letter-spacing="6">ESQUADRIAS</text>
+    </g>
+  </svg>`;
+}
+function blocoLogo(larg){
+  return `<span style="display:inline-block;width:${larg}px">
+    <img src="logo.png" style="width:100%;display:block" onerror="this.remove()">
+  </span>`.replace('<img','<img data-l="1"') // fallback tratado abaixo
+}
+// monta logo com fallback: tenta logo.png, se falhar mostra o SVG
+function montarLogo(el, larg){
+  const img = new Image();
+  img.src = 'logo.png';
+  img.style.width = larg+'px';
+  img.onload = ()=>{ el.innerHTML=''; el.appendChild(img); };
+  img.onerror = ()=>{ el.innerHTML = logoSVG(larg); };
+  el.innerHTML = logoSVG(larg);
+}
+
+/* =====================================================
+   CATÁLOGO DE PRODUTOS
+===================================================== */
+const TIPOS = {
+  'jc2':  {nome:'Janela de Correr — 2 Folhas', folhas:2, cat:'janela', preco:650},
+  'jc3':  {nome:'Janela de Correr — 3 Folhas', folhas:3, cat:'janela', preco:700},
+  'jc4':  {nome:'Janela de Correr — 4 Folhas', folhas:4, cat:'janela', preco:750},
+  'jmax': {nome:'Janela Maxim-Ar',              folhas:1, cat:'janela', preco:600},
+  'jbas': {nome:'Janela Basculante',            folhas:1, cat:'janela', preco:550},
+  'jfix': {nome:'Janela / Painel Fixo',         folhas:1, cat:'janela', preco:450},
+  'pc2':  {nome:'Porta de Correr — 2 Folhas',   folhas:2, cat:'porta',  preco:800},
+  'pc4':  {nome:'Porta de Correr — 4 Folhas',   folhas:4, cat:'porta',  preco:850},
+  'pa1':  {nome:'Porta de Abrir — 1 Folha',     folhas:1, cat:'porta',  preco:900},
+  'pa2':  {nome:'Porta de Abrir — 2 Folhas',    folhas:2, cat:'porta',  preco:950},
+  'ppiv': {nome:'Porta Pivotante',              folhas:1, cat:'porta',  preco:1200},
+};
+
+/* =====================================================
+   DESENHO TÉCNICO EM SVG (com cotas)
+===================================================== */
+function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
+  wmm = Math.max(Number(wmm)||100, 100);
+  hmm = Math.max(Number(hmm)||100, 100);
+  const razao = wmm/hmm;
+  let dw, dh;
+  if (razao > maxW/maxH){ dw = maxW; dh = Math.max(maxW/razao, 40); }
+  else { dh = maxH; dw = Math.max(maxH*razao, 40); }
+
+  const M = 8;            // margem esquerda/topo
+  const COTA = 30;        // espaço das cotas (baixo e direita)
+  const W = dw + M*2 + COTA, H = dh + M*2 + COTA;
+  const x0 = M, y0 = M;
+  const fr = 7;           // espessura do quadro
+  const ix = x0+fr, iy = y0+fr, iw = dw-fr*2, ih = dh-fr*2;
+
+  const vidro = `fill="url(#gvidro)"`;
+  let interno = '';
+  const t = TIPOS[tipo] || TIPOS['jfix'];
+  const n = t.folhas;
+
+  const seta = (cx,cy,dir)=>{ // seta horizontal dupla
+    const s=9;
+    if(dir==='h') return `<g stroke="#555" stroke-width="1.4" fill="#555">
+      <line x1="${cx-s}" y1="${cy}" x2="${cx+s}" y2="${cy}"/>
+      <path d="M${cx-s},${cy} l5,-3 v6 z"/><path d="M${cx+s},${cy} l-5,-3 v6 z"/></g>`;
+    return '';
+  };
+
+  if (tipo==='jc2'||tipo==='jc3'||tipo==='jc4'||tipo==='pc2'||tipo==='pc4'){
+    const fw = iw/n;
+    for(let i=0;i<n;i++){
+      const fx = ix + i*fw;
+      interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>`;
+      interno += seta(fx+fw/2, iy+ih/2, 'h');
+      if(i>0) interno += `<rect x="${fx-2}" y="${iy+ih*0.44}" width="4" height="${ih*0.12}" rx="2" fill="#3a3a3c"/>`; // puxador
+    }
+  }
+  else if (tipo==='jmax'){
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+      <g stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none">
+        <path d="M${ix+2},${iy+ih-2} L${ix+iw/2},${iy+2} L${ix+iw-2},${iy+ih-2}"/>
+      </g>`;
+  }
+  else if (tipo==='jbas'){
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+      <g stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none">
+        <path d="M${ix+2},${iy+2} L${ix+iw/2},${iy+ih-2} L${ix+iw-2},${iy+2}"/>
+      </g>
+      <line x1="${ix}" y1="${iy+ih/2}" x2="${ix+iw}" y2="${iy+ih/2}" stroke="#7a7a7e" stroke-width="2"/>`;
+  }
+  else if (tipo==='jfix'){
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+      <text x="${ix+iw/2}" y="${iy+ih/2+4}" text-anchor="middle" font-size="11" fill="#999" font-family="Arial">FIXO</text>`;
+  }
+  else if (tipo==='pa1'||tipo==='ppiv'){
+    const px = tipo==='ppiv' ? ix+iw*0.25 : ix;
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+      <g stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none">
+        <path d="M${ix+iw-2},${iy+2} L${px+2},${iy+ih/2} L${ix+iw-2},${iy+ih-2}"/>
+      </g>
+      <rect x="${ix+iw-8}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
+    if (tipo==='ppiv') interno += `<line x1="${px}" y1="${iy}" x2="${px}" y2="${iy+ih}" stroke="#c1272d" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+  }
+  else if (tipo==='pa2'){
+    const fw = iw/2;
+    for(let i=0;i<2;i++){
+      const fx = ix+i*fw;
+      const dobX = i===0 ? fx+2 : fx+fw-2;
+      const puxX = i===0 ? fx+fw-8 : fx+4;
+      interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
+        <g stroke="#c1272d" stroke-width="1.2" stroke-dasharray="5 4" fill="none">
+          <path d="M${i===0?fx+fw-2:fx+2},${iy+2} L${dobX},${iy+ih/2} L${i===0?fx+fw-2:fx+2},${iy+ih-2}"/>
+        </g>
+        <rect x="${puxX}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
+    }
+  }
+
+  // cotas
+  const cy = y0+dh+16, cx = x0+dw+16;
+  const cotas = `
+    <g stroke="#c1272d" stroke-width="1" fill="none">
+      <line x1="${x0}" y1="${cy-5}" x2="${x0}" y2="${cy+5}"/><line x1="${x0+dw}" y1="${cy-5}" x2="${x0+dw}" y2="${cy+5}"/>
+      <line x1="${x0}" y1="${cy}" x2="${x0+dw}" y2="${cy}"/>
+      <line x1="${cx-5}" y1="${y0}" x2="${cx+5}" y2="${y0}"/><line x1="${cx-5}" y1="${y0+dh}" x2="${cx+5}" y2="${y0+dh}"/>
+      <line x1="${cx}" y1="${y0}" x2="${cx}" y2="${y0+dh}"/>
+    </g>
+    <text x="${x0+dw/2}" y="${cy+13}" text-anchor="middle" font-size="11" font-weight="700" fill="#c1272d" font-family="Arial">${wmm} mm</text>
+    <text x="${cx+7}" y="${y0+dh/2}" font-size="11" font-weight="700" fill="#c1272d" font-family="Arial" transform="rotate(90 ${cx+7} ${y0+dh/2})" text-anchor="middle">${hmm} mm</text>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="gvidro" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dceef7"/><stop offset="0.5" stop-color="#c2e0ef"/><stop offset="1" stop-color="#e8f4fa"/>
+    </linearGradient></defs>
+    <rect x="${x0}" y="${y0}" width="${dw}" height="${dh}" fill="#e9e9ec" stroke="#3a3a3c" stroke-width="3"/>
+    ${interno}${cotas}
+  </svg>`;
+}
+
+/* =====================================================
+   LISTA DE MATERIAIS (calculada pelas medidas)
+===================================================== */
+function calcularMateriais(tipo, wmm, hmm, cor, vidro){
+  const t = TIPOS[tipo]; if(!t) return [];
+  const w = wmm/1000, h = hmm/1000;
+  const n = t.folhas;
+  const perimetro = 2*(w+h);
+  const areaVidro = Math.max(w*h, 0);
+  const m2 = x => x.toFixed(2).replace('.',',');
+  const mats = [];
+  const add = (item, qtd, un) => mats.push({item, qtd, un});
+
+  add(`Perfil de alumínio ${cor} — marco/contramarco`, m2(perimetro*1.05), 'm');
+  if (tipo.startsWith('jc')||tipo.startsWith('pc')){
+    add(`Perfil de alumínio ${cor} — folhas de correr`, m2(n*2*((w/n)+h)*1.05), 'm');
+    add('Roldanas com rolamento', n*2, 'un');
+    add('Fecho concha / fecho flush', Math.max(n-1,1), 'un');
+    add('Escova de vedação (fita pelo)', m2(n*2*h + 2*w), 'm');
+    add('Trilho inferior + guia superior', m2(2*w), 'm');
+  } else if (tipo==='jmax'){
+    add(`Perfil de alumínio ${cor} — folha maxim-ar`, m2(perimetro*0.95), 'm');
+    add('Braço de articulação maxim-ar (par)', 1, 'par');
+    add('Fecho / cremona maxim-ar', 1, 'un');
+    add('Vedação EPDM', m2(perimetro), 'm');
+  } else if (tipo==='jbas'){
+    add(`Perfil de alumínio ${cor} — folha basculante`, m2(perimetro*0.6), 'm');
+    add('Kit basculante (eixo + alavanca)', 1, 'kit');
+    add('Vedação EPDM', m2(perimetro), 'm');
+  } else if (tipo==='jfix'){
+    add('Baguete de fixação do vidro', m2(perimetro*0.95), 'm');
+    add('Calço de apoio + vedação', 1, 'kit');
+  } else if (tipo==='pa1'||tipo==='pa2'||tipo==='ppiv'){
+    add(`Perfil de alumínio ${cor} — folha(s) de porta`, m2(n*2*((w/n)+h)*1.05), 'm');
+    if (tipo==='ppiv'){ add('Kit pivô superior e inferior', 1, 'kit'); }
+    else { add('Dobradiças reforçadas', n*3, 'un'); }
+    add('Fechadura com cilindro e maçaneta', 1, 'un');
+    add('Vedação EPDM / escova', m2(perimetro), 'm');
+  }
+  if (vidro !== 'Sem vidro'){
+    add(`Vidro ${vidro}`, m2(areaVidro), 'm²');
+    add('Guarnição / baguete do vidro', m2(perimetro*0.95), 'm');
+  }
+  add('Silicone neutro + fixadores (parafusos e buchas)', 1, 'kit');
+  return mats;
+}
+
+/* =====================================================
+   ESTADO
+===================================================== */
+let itens = [];
+let editandoId = null;   // id do orçamento salvo em edição
+
+// Dados carregados do servidor ao abrir; toda alteração é gravada de volta
+const MEM = { orcamentos: [], config: null };
+
+async function salvarServidor(){
+  try{
+    const r = await fetch('/api/dados', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(MEM),
+    });
+    if(!r.ok) throw new Error(r.status);
+  }catch(e){
+    alert('Não foi possível salvar no servidor. Verifique se o sistema está no ar e tente novamente.');
+  }
+}
+
+const CFG_PADRAO = {
+  nome:'ICS Esquadrias', cnpj:'00.000.000/0001-00',
+  end:'Rua Exemplo, 123 — Centro — Sua Cidade/UF',
+  fone:'(00) 00000-0000', email:'contato@icsesquadrias.com.br',
+  validade:15, prazo:20,
+  pagto:'50% de entrada + 50% na entrega. Aceitamos PIX, dinheiro e cartão.',
+  garantia:'Garantia de 1 ano contra defeitos de fabricação e instalação.',
+  precos:{}
+};
+function getCfg(){
+  return Object.assign({}, CFG_PADRAO, MEM.config || {});
+}
+
+/* =====================================================
+   FORMATAÇÃO
+===================================================== */
+const R$ = v => (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const hoje = () => new Date().toLocaleDateString('pt-BR');
+
+/* =====================================================
+   UI — ABAS
+===================================================== */
+function trocarAba(aba){
+  document.querySelectorAll('.painel').forEach(p=>p.classList.remove('ativa'));
+  document.getElementById('aba-'+aba).classList.add('ativa');
+  document.querySelectorAll('nav.abas button').forEach(b=>b.classList.toggle('ativa', b.dataset.aba===aba));
+  if(aba==='salvos') renderSalvos();
+  if(aba==='config') carregarConfig();
+}
+
+/* =====================================================
+   PRÉVIA DO ITEM
+===================================================== */
+function atualizarPrevia(){
+  const tipo = document.getElementById('itTipo').value;
+  const w = Number(document.getElementById('itLarg').value)||0;
+  const h = Number(document.getElementById('itAlt').value)||0;
+  document.getElementById('previaDesenho').innerHTML = desenharEsquadria(tipo, w, h);
+  const cor = document.getElementById('itCor').value;
+  const vidro = document.getElementById('itVidro').value;
+  const mats = calcularMateriais(tipo, w, h, cor, vidro);
+  document.getElementById('previaMat').innerHTML =
+    '<b>Materiais estimados:</b><br>' + mats.slice(0,4).map(m=>`• ${m.item}`).join('<br>') + (mats.length>4?`<br>• … e mais ${mats.length-4} itens`:'');
+  // sugestão de preço
+  const cfg = getCfg();
+  const base = (cfg.precos && cfg.precos[tipo]) || TIPOS[tipo].preco;
+  const area = Math.max((w*h)/1e6, 1);
+  const sug = area*base;
+  document.getElementById('sugestaoPreco').textContent =
+    `Sugestão: ${R$(sug)} (${area.toFixed(2).replace('.',',')} m² × ${R$(base)}/m²)`;
+}
+
+/* =====================================================
+   ITENS DO ORÇAMENTO
+===================================================== */
+function adicionarItem(){
+  const tipo = document.getElementById('itTipo').value;
+  const w = Number(document.getElementById('itLarg').value);
+  const h = Number(document.getElementById('itAlt').value);
+  const qtd = Number(document.getElementById('itQtd').value)||1;
+  let preco = Number(document.getElementById('itPreco').value);
+  if(!w || !h){ alert('Informe a largura e a altura em milímetros.'); return; }
+  if(!preco){
+    const cfg = getCfg();
+    const base = (cfg.precos && cfg.precos[tipo]) || TIPOS[tipo].preco;
+    preco = Math.max((w*h)/1e6,1)*base;
+    if(!confirm(`Preço unitário não informado.\nUsar a sugestão de ${R$(preco)}?`)) return;
+  }
+  itens.push({
+    tipo, w, h, qtd, preco,
+    local: document.getElementById('itLocal').value,
+    cor: document.getElementById('itCor').value,
+    vidro: document.getElementById('itVidro').value,
+    obs: document.getElementById('itObs').value,
+  });
+  document.getElementById('itLocal').value='';
+  document.getElementById('itObs').value='';
+  document.getElementById('itPreco').value='';
+  renderItens();
+}
+
+function removerItem(i){ itens.splice(i,1); renderItens(); }
+
+function renderItens(){
+  const el = document.getElementById('listaItens');
+  if(!itens.length){ el.innerHTML = '<div class="vazio">Nenhum item adicionado. Preencha os dados acima e clique em “Adicionar ao Orçamento”.</div>'; }
+  else{
+    let html = `<table class="itens"><thead><tr>
+      <th>Desenho</th><th>Produto</th><th>Ambiente</th><th>Medidas (L×A)</th><th>Cor</th><th>Vidro</th><th>Qtd</th><th>Unitário</th><th>Subtotal</th><th></th>
+    </tr></thead><tbody>`;
+    itens.forEach((it,i)=>{
+      html += `<tr>
+        <td class="mini-des">${desenharEsquadria(it.tipo, it.w, it.h, 80, 62)}</td>
+        <td><b>${TIPOS[it.tipo].nome}</b>${it.obs?`<br><small style="color:#888">${it.obs}</small>`:''}</td>
+        <td>${it.local||'—'}</td>
+        <td>${it.w} × ${it.h} mm</td>
+        <td>${it.cor}</td><td>${it.vidro}</td>
+        <td>${it.qtd}</td><td>${R$(it.preco)}</td>
+        <td><b>${R$(it.preco*it.qtd)}</b></td>
+        <td><button class="btn btn-borda btn-mini" onclick="removerItem(${i})">✕</button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }
+  const sub = itens.reduce((s,it)=>s+it.preco*it.qtd,0);
+  const desc = Number(document.getElementById('orcDesconto').value)||0;
+  document.getElementById('orcTotal').textContent = R$(Math.max(sub-desc,0));
+}
+
+function novoOrcamento(){
+  if(itens.length && !confirm('Limpar o orçamento atual?')) return;
+  itens = []; editandoId = null;
+  ['cliNome','cliFone','cliDoc','cliEnd','cliEmail','orcObs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('orcDesconto').value = 0;
+  renderItens();
+}
+
+/* =====================================================
+   SALVAR / CARREGAR ORÇAMENTOS
+===================================================== */
+function listaSalvos(){ return MEM.orcamentos; }
+
+function proximoNumero(){
+  const ano = new Date().getFullYear();
+  const doAno = listaSalvos().filter(o=>o.numero.includes(String(ano)));
+  return `ORC-${ano}-${String(doAno.length+1).padStart(3,'0')}`;
+}
+
+function dadosOrcamentoAtual(){
+  return {
+    cliente:{
+      nome: document.getElementById('cliNome').value,
+      fone: document.getElementById('cliFone').value,
+      doc: document.getElementById('cliDoc').value,
+      end: document.getElementById('cliEnd').value,
+      email: document.getElementById('cliEmail').value,
+    },
+    itens: JSON.parse(JSON.stringify(itens)),
+    desconto: Number(document.getElementById('orcDesconto').value)||0,
+    obs: document.getElementById('orcObs').value,
+  };
+}
+
+function salvarOrcamento(){
+  if(!itens.length){ alert('Adicione ao menos um item.'); return; }
+  if(!document.getElementById('cliNome').value){ alert('Informe o nome do cliente.'); return; }
+  const todos = listaSalvos();
+  const d = dadosOrcamentoAtual();
+  if(editandoId){
+    const idx = todos.findIndex(o=>o.id===editandoId);
+    if(idx>=0){ Object.assign(todos[idx], d); todos[idx].data = hoje(); }
+  } else {
+    const novo = Object.assign({id: Date.now(), numero: proximoNumero(), data: hoje(), status:'Aberto'}, d);
+    todos.push(novo);
+    editandoId = novo.id;
+  }
+  salvarServidor();
+  alert('Orçamento salvo com sucesso!');
+}
+
+function abrirOrcamento(id){
+  const o = listaSalvos().find(x=>x.id===id); if(!o) return;
+  editandoId = id;
+  itens = JSON.parse(JSON.stringify(o.itens));
+  document.getElementById('cliNome').value = o.cliente.nome||'';
+  document.getElementById('cliFone').value = o.cliente.fone||'';
+  document.getElementById('cliDoc').value = o.cliente.doc||'';
+  document.getElementById('cliEnd').value = o.cliente.end||'';
+  document.getElementById('cliEmail').value = o.cliente.email||'';
+  document.getElementById('orcDesconto').value = o.desconto||0;
+  document.getElementById('orcObs').value = o.obs||'';
+  renderItens();
+  trocarAba('novo');
+}
+
+function mudarStatus(id, st){
+  const todos = listaSalvos();
+  const o = todos.find(x=>x.id===id); if(!o) return;
+  o.status = st;
+  salvarServidor();
+  renderSalvos();
+}
+
+function excluirOrcamento(id){
+  if(!confirm('Excluir este orçamento?')) return;
+  MEM.orcamentos = listaSalvos().filter(o=>o.id!==id);
+  salvarServidor();
+  if(editandoId===id) editandoId=null;
+  renderSalvos();
+}
+
+function renderSalvos(){
+  const todos = listaSalvos().slice().reverse();
+  const tb = document.getElementById('tabelaSalvos');
+  document.getElementById('salvosVazio').style.display = todos.length?'none':'block';
+  tb.innerHTML = todos.map(o=>{
+    const total = o.itens.reduce((s,it)=>s+it.preco*it.qtd,0) - (o.desconto||0);
+    const et = o.status==='Aprovado'?'et-aprovado':o.status==='Recusado'?'et-recusado':'et-aberto';
+    return `<tr>
+      <td><b>${o.numero}</b></td><td>${o.data}</td><td>${o.cliente.nome}</td>
+      <td>${o.itens.length}</td><td><b>${R$(total)}</b></td>
+      <td><span class="etiqueta ${et}">${o.status}</span></td>
+      <td>
+        <button class="btn btn-borda btn-mini" onclick="abrirOrcamento(${o.id})">✏️ Abrir</button>
+        <button class="btn btn-borda btn-mini" onclick="pdfSalvo(${o.id})">📄 PDF</button>
+        <select class="btn-mini" style="padding:4px;border:1px solid var(--borda);border-radius:5px" onchange="mudarStatus(${o.id}, this.value)">
+          <option ${o.status==='Aberto'?'selected':''}>Aberto</option>
+          <option ${o.status==='Aprovado'?'selected':''}>Aprovado</option>
+          <option ${o.status==='Recusado'?'selected':''}>Recusado</option>
+        </select>
+        <button class="btn btn-borda btn-mini" onclick="excluirOrcamento(${o.id})">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* =====================================================
+   CONFIGURAÇÕES
+===================================================== */
+function carregarConfig(){
+  const c = getCfg();
+  cfgNome.value=c.nome; cfgCnpj.value=c.cnpj; cfgEnd.value=c.end;
+  cfgFone.value=c.fone; cfgEmail.value=c.email;
+  cfgValidade.value=c.validade; cfgPrazo.value=c.prazo;
+  cfgPagto.value=c.pagto; cfgGarantia.value=c.garantia;
+  const box = document.getElementById('cfgPrecos');
+  box.innerHTML = Object.entries(TIPOS).map(([k,t])=>`
+    <div class="campo curto"><label>${t.nome}</label>
+      <input type="number" id="preco_${k}" value="${(c.precos&&c.precos[k])||t.preco}"></div>`).join('');
+}
+function salvarConfig(){
+  const precos = {};
+  Object.keys(TIPOS).forEach(k=>{ precos[k] = Number(document.getElementById('preco_'+k).value)||TIPOS[k].preco; });
+  const c = {
+    nome:cfgNome.value, cnpj:cfgCnpj.value, end:cfgEnd.value, fone:cfgFone.value, email:cfgEmail.value,
+    validade:Number(cfgValidade.value)||15, prazo:Number(cfgPrazo.value)||20,
+    pagto:cfgPagto.value, garantia:cfgGarantia.value, precos
+  };
+  MEM.config = c;
+  salvarServidor();
+  document.getElementById('cfgOk').textContent = '✓ Salvo!';
+  setTimeout(()=>document.getElementById('cfgOk').textContent='',2500);
+}
+
+function exportarBackup(){
+  window.open('/api/backup', '_blank'); // baixa o arquivo de backup
+}
+
+/* =====================================================
+   PDF (impressão formatada)
+===================================================== */
+function montarPaginaPDF(o){
+  const cfg = getCfg();
+  const sub = o.itens.reduce((s,it)=>s+it.preco*it.qtd,0);
+  const total = Math.max(sub-(o.desconto||0),0);
+  const logoHtml = document.getElementById('logoTopo').innerHTML.replace(/width="\d+"/,'width="150"');
+
+  let itensHtml = '';
+  o.itens.forEach((it,i)=>{
+    const mats = calcularMateriais(it.tipo, it.w, it.h, it.cor, it.vidro);
+    itensHtml += `
+    <div class="item-orc">
+      <div class="item-cab">
+        <span>ITEM ${String(i+1).padStart(2,'0')} — ${TIPOS[it.tipo].nome.toUpperCase()}${it.local?` (${it.local.toUpperCase()})`:''}</span>
+        <span>QTD: ${it.qtd}</span>
+      </div>
+      <div class="item-corpo">
+        <div class="item-des">
+          ${desenharEsquadria(it.tipo, it.w, it.h, 210, 155)}
+          <div class="rotulo">Desenho ilustrativo — vista externa</div>
+        </div>
+        <div class="item-info">
+          <table class="espec">
+            <tr><td>Medidas (L×A)</td><td>${it.w} × ${it.h} mm &nbsp;(${((it.w*it.h)/1e6).toFixed(2).replace('.',',')} m²)</td></tr>
+            <tr><td>Cor do alumínio</td><td>${it.cor}</td></tr>
+            <tr><td>Vidro</td><td>${it.vidro}</td></tr>
+            ${it.obs?`<tr><td>Observações</td><td>${it.obs}</td></tr>`:''}
+          </table>
+          <table class="mat">
+            <thead><tr><th>Materiais utilizados</th><th style="width:70px;text-align:right">Qtd</th><th style="width:40px">Un</th></tr></thead>
+            <tbody>${mats.map(m=>`<tr><td>${m.item}</td><td style="text-align:right">${m.qtd}</td><td>${m.un}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="item-preco">Valor unitário: ${R$(it.preco)} &nbsp;|&nbsp; Subtotal: <strong>${R$(it.preco*it.qtd)}</strong></div>
+    </div>`;
+  });
+
+  return `<div class="pg">
+    <div class="cabecalho">
+      <div>${logoHtml}</div>
+      <div class="dados-emp">
+        <strong>${cfg.nome}</strong><br>
+        CNPJ: ${cfg.cnpj}<br>${cfg.end}<br>
+        ${cfg.fone} • ${cfg.email}
+      </div>
+    </div>
+    <div class="faixa-titulo"><span>ORÇAMENTO Nº ${o.numero}</span><span>DATA: ${o.data}</span></div>
+    <div class="bloco-cliente">
+      <span><b>Cliente:</b> ${o.cliente.nome||'—'}</span>
+      ${o.cliente.doc?`<span><b>CPF/CNPJ:</b> ${o.cliente.doc}</span>`:''}
+      ${o.cliente.fone?`<span><b>Telefone:</b> ${o.cliente.fone}</span>`:''}
+      ${o.cliente.email?`<span><b>E-mail:</b> ${o.cliente.email}</span>`:''}
+      ${o.cliente.end?`<span><b>Obra:</b> ${o.cliente.end}</span>`:''}
+    </div>
+    ${itensHtml}
+    <div class="rodape-total">
+      <div class="caixa-total">
+        <div class="lin"><span>Subtotal</span><span>${R$(sub)}</span></div>
+        ${o.desconto?`<div class="lin"><span>Desconto</span><span>− ${R$(o.desconto)}</span></div>`:''}
+        <div class="lin destaque"><span>TOTAL</span><span>${R$(total)}</span></div>
+      </div>
+    </div>
+    <div class="condicoes">
+      <h4>Condições Comerciais</h4>
+      • <b>Validade da proposta:</b> ${cfg.validade} dias a partir da data de emissão.<br>
+      • <b>Prazo de entrega:</b> ${cfg.prazo} dias úteis após confirmação e conferência de medidas.<br>
+      • <b>Pagamento:</b> ${cfg.pagto}<br>
+      • <b>Garantia:</b> ${cfg.garantia}
+      ${o.obs?`<br>• <b>Observações:</b> ${o.obs}`:''}
+    </div>
+    <div class="assinaturas">
+      <div>${cfg.nome}</div>
+      <div>${o.cliente.nome||'Cliente'}<br><small>De acordo</small></div>
+    </div>
+    <div class="rodape-fim">Orçamento gerado pelo sistema ${cfg.nome} • Desenhos meramente ilustrativos • Medidas finais confirmadas na obra</div>
+  </div>`;
+}
+
+function imprimirOrcamento(o){
+  document.getElementById('areaImpressao').innerHTML = montarPaginaPDF(o);
+  window.print(); // na janela de impressão, escolha "Salvar como PDF"
+}
+
+function gerarPDF(){
+  if(!itens.length){ alert('Adicione ao menos um item antes de gerar o PDF.'); return; }
+  const o = Object.assign(
+    {numero: editandoId ? (listaSalvos().find(x=>x.id===editandoId)||{}).numero || proximoNumero() : proximoNumero(),
+     data: hoje()},
+    dadosOrcamentoAtual());
+  imprimirOrcamento(o);
+}
+
+function pdfSalvo(id){
+  const o = listaSalvos().find(x=>x.id===id); if(!o) return;
+  imprimirOrcamento(o);
+}
+
+/* =====================================================
+   INICIALIZAÇÃO
+===================================================== */
+(async function init(){
+  // Carrega os dados do servidor antes de montar a tela
+  try{
+    const r = await fetch('/api/dados');
+    const d = await r.json();
+    if(d){
+      MEM.orcamentos = d.orcamentos || [];
+      MEM.config = d.config || null;
+    }
+  }catch(e){
+    alert('Não foi possível carregar os dados do servidor.');
+  }
+  document.getElementById('btnBackup').style.display = 'inline-block';
+  montarLogo(document.getElementById('logoTopo'), 110);
+  const sel = document.getElementById('itTipo');
+  const grupos = {janela:'— JANELAS —', porta:'— PORTAS —'};
+  ['janela','porta'].forEach(cat=>{
+    const og = document.createElement('optgroup'); og.label = grupos[cat];
+    Object.entries(TIPOS).filter(([k,t])=>t.cat===cat).forEach(([k,t])=>{
+      const op = document.createElement('option'); op.value=k; op.textContent=t.nome; og.appendChild(op);
+    });
+    sel.appendChild(og);
+  });
+  document.getElementById('itCor').addEventListener('change', atualizarPrevia);
+  document.getElementById('itVidro').addEventListener('change', atualizarPrevia);
+  atualizarPrevia();
+  renderItens();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+====================================================
+ ICS ORÇAMENTOS — Guia Rápido (versão site)
+====================================================
+
+COMO LIGAR O SISTEMA
+--------------------
+1. Dê dois cliques em "INICIAR.bat" (nesta pasta).
+   Uma janela preta abre (é o servidor — deixe aberta)
+   e o navegador abre sozinho no sistema.
+2. Endereço no navegador:  http://localhost:3344
+3. Para usar de OUTRO computador ou celular na mesma
+   rede Wi-Fi: descubra o IP desta máquina (comando
+   "ipconfig") e acesse  http://IP-DA-MAQUINA:3344
+
+   Obs.: o computador que roda o servidor precisa estar
+   ligado para o sistema funcionar. (Requisito: Node.js
+   instalado — https://nodejs.org)
+
+COMO USAR
+---------
+1. NOVO ORÇAMENTO: preencha os dados do cliente, escolha
+   o produto (janela/porta), digite as medidas em
+   milímetros e o desenho aparece na hora. Informe o
+   preço e clique em "Adicionar ao Orçamento".
+2. GERAR PDF: abre a tela de impressão já formatada —
+   escolha "Salvar como PDF" como impressora.
+3. SALVAR ORÇAMENTO: guarda no histórico com numeração
+   automática (ORC-2026-001, 002...).
+4. ORÇAMENTOS SALVOS: reabra, edite, gere o PDF de novo
+   e marque como Aprovado/Recusado.
+5. CONFIGURAÇÕES: preencha os dados reais da empresa
+   (CNPJ, endereço, telefone), condições de pagamento e
+   preços por m². Tudo sai automaticamente no PDF.
+
+ONDE FICAM OS DADOS
+-------------------
+Os orçamentos ficam no servidor, no arquivo
+"dados\dados-ics.json". Em Configurações há o botão
+"Exportar Backup dos Dados" para baixar uma cópia.
+
+LOGO ORIGINAL
+-------------
+O sistema desenha a logo da ICS automaticamente.
+Para usar a imagem original exata, salve-a com o nome
+"logo.png" dentro da pasta "public".
+
+DESENVOLVIMENTO (para você)
+---------------------------
+- Rodar em modo desenvolvimento:  npm run start:dev
+- Estrutura: NestJS (pasta src) servindo a tela única
+  (public/index.html) + API em /api/dados e /api/backup.
+- Para hospedar na internet (tipo o sistema de cobrança),
+  funciona em qualquer serviço Node (Render, Railway...).
