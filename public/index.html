@@ -31,8 +31,11 @@
   .cartao h2{font-size:15px;text-transform:uppercase;letter-spacing:.5px;color:var(--vermelho);border-bottom:2px solid var(--cinza-claro);padding-bottom:8px;margin-bottom:14px}
 
   .linha{display:flex;flex-wrap:wrap;gap:12px}
-  .campo{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
-  .campo.curto{flex:0 0 130px}
+  .campo{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px;justify-content:flex-end}
+  .campo.curto{flex:0 0 150px}
+  /* grade de preços por m² com colunas uniformes */
+  #cfgPrecos{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px}
+  #cfgPrecos .campo{min-width:0}
   .campo label{font-size:12px;font-weight:600;color:#666}
   .campo input,.campo select,.campo textarea{border:1px solid var(--borda);border-radius:6px;padding:8px 10px;font-size:14px;background:#fff;color:var(--cinza)}
   .campo input:focus,.campo select:focus,.campo textarea:focus{outline:2px solid #f0b6b8;border-color:var(--vermelho)}
@@ -57,7 +60,8 @@
   table.itens tr:hover td{background:#fdf5f5}
   .mini-des svg{display:block}
 
-  .totais{display:flex;justify-content:flex-end;gap:30px;margin-top:14px;font-size:15px;align-items:center;flex-wrap:wrap}
+  .totais{display:flex;justify-content:flex-end;gap:30px;margin-top:14px;font-size:15px;align-items:flex-end;flex-wrap:wrap}
+  .totais>div:last-child{padding-bottom:7px}
   .totais .total-final{font-size:20px;font-weight:800;color:var(--vermelho)}
 
   /* lista de orçamentos salvos */
@@ -249,9 +253,9 @@
     <h2>Usuário e Senha de Acesso</h2>
     <div class="linha">
       <div class="campo curto"><label>Usuário</label><input id="acUsuario" autocomplete="off"></div>
-      <div class="campo curto"><label>Nova senha (deixe em branco p/ manter)</label><input id="acNovaSenha" type="password" autocomplete="new-password"></div>
+      <div class="campo curto"><label>Nova senha</label><input id="acNovaSenha" type="password" autocomplete="new-password" placeholder="Em branco = manter"></div>
       <div class="campo curto"><label>Confirmar nova senha</label><input id="acConfirma" type="password" autocomplete="new-password"></div>
-      <div class="campo curto"><label>Senha atual (obrigatória)</label><input id="acSenhaAtual" type="password" autocomplete="current-password"></div>
+      <div class="campo curto"><label>Senha atual</label><input id="acSenhaAtual" type="password" autocomplete="current-password" placeholder="Obrigatória"></div>
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
       <button class="btn btn-cinza" onclick="salvarAcesso()">🔒 Salvar Acesso</button>
@@ -725,7 +729,7 @@ function carregarConfig(){
   cfgPagto.value=c.pagto; cfgGarantia.value=c.garantia;
   const box = document.getElementById('cfgPrecos');
   box.innerHTML = Object.entries(TIPOS).map(([k,t])=>`
-    <div class="campo curto"><label>${t.nome}</label>
+    <div class="campo"><label>${t.nome}</label>
       <input type="number" id="preco_${k}" value="${(c.precos&&c.precos[k])||t.preco}"></div>`).join('');
 }
 function salvarConfig(){
