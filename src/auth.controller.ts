@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
-const UM_MES = 60 * 60 * 24 * 30;
+const DURACAO_SESSAO = 60 * 60 * 3; // 3 horas
 
 function cookieSeguro(req: any): string {
   const proto = String(req.headers['x-forwarded-proto'] || req.protocol || '');
@@ -16,7 +16,7 @@ export class AuthController {
     const token = await this.auth.tokenAtual();
     res.setHeader(
       'Set-Cookie',
-      `ics_token=${token}; Path=/; HttpOnly; Max-Age=${UM_MES}; SameSite=Lax${cookieSeguro(req)}`,
+      `ics_token=${token}; Path=/; HttpOnly; Max-Age=${DURACAO_SESSAO}; SameSite=Lax${cookieSeguro(req)}`,
     );
   }
 
