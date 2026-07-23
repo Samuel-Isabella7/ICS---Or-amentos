@@ -11,5 +11,3 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
-      - key: SENHA_ACESSO
-        sync: false

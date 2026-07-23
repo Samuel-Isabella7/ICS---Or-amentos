@@ -245,6 +245,20 @@
     <div class="linha" id="cfgPrecos"></div>
     <p style="font-size:12px;color:#888;margin-top:10px">O preço final de cada item é sempre digitado por você — a sugestão serve só como apoio. Área mínima de cálculo: 1,00 m².</p>
   </div>
+  <div class="cartao">
+    <h2>Usuário e Senha de Acesso</h2>
+    <div class="linha">
+      <div class="campo curto"><label>Usuário</label><input id="acUsuario" autocomplete="off"></div>
+      <div class="campo curto"><label>Nova senha (deixe em branco p/ manter)</label><input id="acNovaSenha" type="password" autocomplete="new-password"></div>
+      <div class="campo curto"><label>Confirmar nova senha</label><input id="acConfirma" type="password" autocomplete="new-password"></div>
+      <div class="campo curto"><label>Senha atual (obrigatória)</label><input id="acSenhaAtual" type="password" autocomplete="current-password"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-cinza" onclick="salvarAcesso()">🔒 Salvar Acesso</button>
+      <span id="acMsg" style="font-size:13px;font-weight:600"></span>
+    </div>
+    <p style="font-size:12px;color:#888;margin-top:10px">A troca vale na hora para os próximos logins. Quem já está logado continua logado neste navegador.</p>
+  </div>
   <button class="btn btn-vermelho" onclick="salvarConfig()">💾 Salvar Configurações</button>
   <button class="btn btn-borda" id="btnBackup" style="display:none;margin-left:8px" onclick="exportarBackup()">📦 Exportar Backup dos Dados</button>
   <span id="cfgOk" style="margin-left:10px;color:#155724;font-weight:600"></span>
@@ -458,6 +472,7 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
 ===================================================== */
 let itens = [];
 let editandoId = null;   // id do orçamento salvo em edição
+let USUARIO = '';        // usuário logado (para preencher as Configurações)
 
 // Dados carregados do servidor ao abrir; toda alteração é gravada de volta
 const MEM = { orcamentos: [], config: null };
@@ -702,6 +717,7 @@ function renderSalvos(){
    CONFIGURAÇÕES
 ===================================================== */
 function carregarConfig(){
+  document.getElementById('acUsuario').value = USUARIO;
   const c = getCfg();
   cfgNome.value=c.nome; cfgCnpj.value=c.cnpj; cfgEnd.value=c.end;
   cfgFone.value=c.fone; cfgEmail.value=c.email;
@@ -728,6 +744,38 @@ function salvarConfig(){
 
 function exportarBackup(){
   window.open('/api/backup', '_blank'); // baixa o arquivo de backup
+}
+
+async function salvarAcesso(){
+  const msg = document.getElementById('acMsg');
+  const usuario = document.getElementById('acUsuario').value.trim();
+  const novaSenha = document.getElementById('acNovaSenha').value;
+  const confirma = document.getElementById('acConfirma').value;
+  const senhaAtual = document.getElementById('acSenhaAtual').value;
+  msg.style.color = '#a02025';
+  if(!usuario){ msg.textContent = 'Informe o nome de usuário.'; return; }
+  if(!senhaAtual){ msg.textContent = 'Informe a senha atual para confirmar.'; return; }
+  if(novaSenha && novaSenha !== confirma){ msg.textContent = 'A confirmação não confere com a nova senha.'; return; }
+  if(novaSenha && novaSenha.length < 6){ msg.textContent = 'A nova senha deve ter pelo menos 6 caracteres.'; return; }
+  try{
+    const r = await fetch('/api/alterar-acesso', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ usuario, novaSenha, senhaAtual }),
+    });
+    const resp = await r.json().catch(()=>({}));
+    if(r.ok){
+      msg.style.color = '#155724';
+      msg.textContent = '✓ Acesso atualizado!';
+      document.getElementById('acNovaSenha').value = '';
+      document.getElementById('acConfirma').value = '';
+      document.getElementById('acSenhaAtual').value = '';
+    } else {
+      msg.textContent = resp.erro || 'Não foi possível atualizar o acesso.';
+    }
+  }catch(e){
+    msg.textContent = 'Falha de conexão com o servidor.';
+  }
 }
 
 /* =====================================================
@@ -842,16 +890,13 @@ function pdfSalvo(id){
     if(d){
       MEM.orcamentos = d.orcamentos || [];
       MEM.config = d.config || null;
+      USUARIO = d.usuario || '';
     }
   }catch(e){
     alert('Não foi possível carregar os dados do servidor.');
   }
   document.getElementById('btnBackup').style.display = 'inline-block';
-  // mostra o botão "Sair" apenas quando o sistema está protegido por senha
-  try{
-    const s = await (await fetch('/api/sessao')).json();
-    if(s.protegido) document.getElementById('btnSair').style.display = 'inline-block';
-  }catch(e){}
+  document.getElementById('btnSair').style.display = 'inline-block';
   montarLogo(document.getElementById('logoTopo'), 110);
   const sel = document.getElementById('itTipo');
   const grupos = {janela:'— JANELAS —', porta:'— PORTAS —'};

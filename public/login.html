@@ -57,12 +57,16 @@
       <div class="logo" id="logoLogin"></div>
       <div class="subtitulo">Sistema de Orçamentos — acesso restrito</div>
       <form id="formLogin">
-        <label for="senha">Senha de acesso</label>
+        <label for="usuario">Usuário</label>
+        <div class="campo-senha" style="margin-bottom:16px">
+          <input type="text" id="usuario" autocomplete="username" autofocus>
+        </div>
+        <label for="senha">Senha</label>
         <div class="campo-senha">
-          <input type="password" id="senha" autocomplete="current-password" autofocus>
+          <input type="password" id="senha" autocomplete="current-password">
           <button type="button" class="olho" onclick="alternarSenha()" title="Mostrar/ocultar senha">👁</button>
         </div>
-        <div class="erro" id="msgErro">Senha incorreta. Tente novamente.</div>
+        <div class="erro" id="msgErro">Usuário ou senha incorretos.</div>
         <button type="submit" class="entrar" id="btnEntrar">Entrar</button>
       </form>
     </div>
@@ -108,7 +112,10 @@ document.getElementById('formLogin').addEventListener('submit', async (ev)=>{
     const r = await fetch('/api/login', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ senha: document.getElementById('senha').value }),
+      body: JSON.stringify({
+        usuario: document.getElementById('usuario').value,
+        senha: document.getElementById('senha').value,
+      }),
     });
     if(r.ok){ location.href = '/'; return; }
     erro.classList.add('mostrar');

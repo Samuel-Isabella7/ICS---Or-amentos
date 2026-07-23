@@ -1,9 +1,13 @@
 import { Body, Controller, Get, Header, Put } from '@nestjs/common';
+import { AuthService } from './auth.service';
 import { DadosService, DadosSistema } from './dados.service';
 
 @Controller()
 export class DadosController {
-  constructor(private readonly dados: DadosService) {}
+  constructor(
+    private readonly dados: DadosService,
+    private readonly auth: AuthService,
+  ) {}
 
   @Get('saude')
   saude() {
@@ -11,8 +15,10 @@ export class DadosController {
   }
 
   @Get('dados')
-  carregar(): Promise<DadosSistema> {
-    return this.dados.carregar();
+  async carregar() {
+    const d = await this.dados.carregar();
+    const a = await this.auth.obter();
+    return { ...d, usuario: a.usuario };
   }
 
   @Put('dados')

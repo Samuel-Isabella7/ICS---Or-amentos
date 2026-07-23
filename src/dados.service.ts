@@ -8,7 +8,12 @@ export interface DadosSistema {
   config: any;
 }
 
-const VAZIO: DadosSistema = { orcamentos: [], config: null };
+// O que fica gravado no banco/arquivo: dados do sistema + credenciais de acesso
+export interface TudoSistema extends DadosSistema {
+  acesso?: { usuario: string; salt: string; hash: string } | null;
+}
+
+const VAZIO: TudoSistema = { orcamentos: [], config: null, acesso: null };
 
 @Injectable()
 export class DadosService implements OnModuleInit {
@@ -29,7 +34,7 @@ export class DadosService implements OnModuleInit {
     }
   }
 
-  async carregar(): Promise<DadosSistema> {
+  async carregarTudo(): Promise<TudoSistema> {
     if (this.pool) {
       const r = await this.pool.query('SELECT conteudo FROM dados_ics WHERE id = 1');
       return { ...VAZIO, ...(r.rows[0]?.conteudo || {}) };
@@ -41,19 +46,30 @@ export class DadosService implements OnModuleInit {
     }
   }
 
-  async salvar(dados: DadosSistema): Promise<void> {
+  async salvarTudo(tudo: TudoSistema): Promise<void> {
     if (this.pool) {
       await this.pool.query(
         `INSERT INTO dados_ics (id, conteudo) VALUES (1, $1)
          ON CONFLICT (id) DO UPDATE SET conteudo = $1`,
-        [JSON.stringify(dados)],
+        [JSON.stringify(tudo)],
       );
       return;
     }
     if (!fs.existsSync(this.pasta)) fs.mkdirSync(this.pasta, { recursive: true });
     // grava em arquivo temporário e renomeia, para nunca corromper os dados
     const tmp = this.arquivo + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(dados, null, 2), 'utf8');
+    fs.writeFileSync(tmp, JSON.stringify(tudo, null, 2), 'utf8');
     fs.renameSync(tmp, this.arquivo);
+  }
+
+  // Versões usadas pela API pública — nunca expõem nem apagam as credenciais
+  async carregar(): Promise<DadosSistema> {
+    const { orcamentos, config } = await this.carregarTudo();
+    return { orcamentos, config };
+  }
+
+  async salvar(dados: DadosSistema): Promise<void> {
+    const atual = await this.carregarTudo();
+    await this.salvarTudo({ ...atual, orcamentos: dados.orcamentos, config: dados.config });
   }
 }

@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
-import { tokenDe } from './auth.util';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { AuthService } from './auth.service';
 
 const UM_MES = 60 * 60 * 24 * 30;
 
@@ -10,20 +10,20 @@ function cookieSeguro(req: any): string {
 
 @Controller()
 export class AuthController {
-  @Get('sessao')
-  sessao() {
-    return { protegido: !!process.env.SENHA_ACESSO };
+  constructor(private readonly auth: AuthService) {}
+
+  private async gravarCookie(req: any, res: any) {
+    const token = await this.auth.tokenAtual();
+    res.setHeader(
+      'Set-Cookie',
+      `ics_token=${token}; Path=/; HttpOnly; Max-Age=${UM_MES}; SameSite=Lax${cookieSeguro(req)}`,
+    );
   }
 
   @Post('login')
-  login(@Body() body: any, @Req() req: any, @Res() res: any) {
-    const senha = process.env.SENHA_ACESSO;
-    if (!senha) return res.json({ ok: true }); // sem proteção configurada
-    if (String(body?.senha || '') === senha) {
-      res.setHeader(
-        'Set-Cookie',
-        `ics_token=${tokenDe(senha)}; Path=/; HttpOnly; Max-Age=${UM_MES}; SameSite=Lax${cookieSeguro(req)}`,
-      );
+  async login(@Body() body: any, @Req() req: any, @Res() res: any) {
+    if (await this.auth.validarLogin(body?.usuario, body?.senha)) {
+      await this.gravarCookie(req, res);
       return res.json({ ok: true });
     }
     return res.status(401).json({ ok: false });
@@ -35,6 +35,21 @@ export class AuthController {
       'Set-Cookie',
       `ics_token=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax${cookieSeguro(req)}`,
     );
+    return res.json({ ok: true });
+  }
+
+  // Troca de usuário/senha (exige a senha atual); mantém o usuário logado
+  @Post('alterar-acesso')
+  async alterarAcesso(@Body() body: any, @Req() req: any, @Res() res: any) {
+    if (!(await this.auth.validarSenha(body?.senhaAtual))) {
+      return res.status(401).json({ ok: false, erro: 'Senha atual incorreta.' });
+    }
+    const novoUsuario = String(body?.usuario || '').trim();
+    if (!novoUsuario) {
+      return res.status(400).json({ ok: false, erro: 'Informe o nome de usuário.' });
+    }
+    await this.auth.alterar(novoUsuario, String(body?.novaSenha || ''));
+    await this.gravarCookie(req, res);
     return res.json({ ok: true });
   }
 }

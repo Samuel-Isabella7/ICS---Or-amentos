@@ -16,6 +16,19 @@ COMO LIGAR O SISTEMA
    ligado para o sistema funcionar. (Requisito: Node.js
    instalado — https://nodejs.org)
 
+LOGIN
+-----
+Acesso inicial:  usuário "Junior"  /  senha "Samuel123"
+Para trocar: Configurações > "Usuário e Senha de Acesso"
+(informe a senha atual para confirmar).
+
+Se esquecer a senha: no painel do Render, em Environment,
+crie a variável RESETAR_ACESSO = 1 e reinicie o serviço.
+O acesso volta ao padrão (Junior/Samuel123). Depois de
+entrar e trocar a senha, REMOVA essa variável.
+(Rodando local: apague o trecho "acesso" do arquivo
+dados\dados-ics.json e reinicie.)
+
 COMO USAR
 ---------
 1. NOVO ORÇAMENTO: preencha os dados do cliente, escolha
