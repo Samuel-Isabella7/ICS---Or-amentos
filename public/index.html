@@ -334,6 +334,17 @@ const TIPOS = {
   'pcam': {nome:'Porta Camarão (dobrável)',                folhas:4, cat:'porta',  preco:1000},
   'plamb':{nome:'Porta de Alumínio Lambril',               folhas:1, cat:'porta',  preco:850},
   'ppers2':{nome:'Porta Integrada com Persiana — 2 Folhas de Correr', folhas:2, cat:'porta', preco:1400},
+  // Portas de obra — importadas das propostas (Kasa Linha 42 / Linha Gold), com tabela de preço por medida
+  'kpiv':    {nome:'Porta Pivotante 1 Folha — Lambril Duplo 150mm (PIV100)',            folhas:1, cat:'tabela', preco:2407},
+  'kpg1pc':  {nome:'Porta de Giro 1 Folha — Palheta Cega (PG100)',                      folhas:1, cat:'tabela', preco:1783},
+  'kpg2pc':  {nome:'Porta de Giro 2 Folhas — Travessa e Palheta Cega 45/45 (PG200)',    folhas:2, cat:'tabela', preco:1692},
+  'kpg2lb':  {nome:'Porta de Giro 2 Folhas — Lambril Duplo 100mm (PG200)',              folhas:2, cat:'tabela', preco:1976},
+  'kpg1lb45':{nome:'Porta de Giro 1 Folha — Lambril Duplo 100mm 45°/45° (PG100)',       folhas:1, cat:'tabela', preco:3081},
+  'gpc1v':   {nome:'Porta de Correr 1 Folha — Veneziana Cega, corre atrás da parede (Gold)', folhas:1, cat:'tabela', preco:1529},
+  'gpg1lb':  {nome:'Porta de Giro 1 Folha — Lambri IN205 (Gold)',                       folhas:1, cat:'tabela', preco:1661},
+  'gpg2lb':  {nome:'Porta de Giro 2 Folhas — Lambri IN205 (Gold)',                      folhas:2, cat:'tabela', preco:1584},
+  'gpg2':    {nome:'Porta de Giro 2 Folhas — Vidro (Gold)',                             folhas:2, cat:'tabela', preco:1301},
+  'gpc2':    {nome:'Porta de Correr 2 Folhas — corre atrás da parede (Gold)',           folhas:2, cat:'tabela', preco:2074},
   // Box, vidros e espelhos
   'box':  {nome:'Box de Banheiro (fixo + porta de correr)',folhas:2, cat:'vidro',  preco:750},
   'sacada':{nome:'Fechamento de Sacada — Cortina de Vidro',folhas:6, cat:'vidro',  preco:1400},
@@ -349,7 +360,30 @@ const TIPOS = {
 
 // Tipos que não levam o marco padrão nem o vidro escolhido automaticamente
 const SEM_MARCO = new Set(['gcorpo','espelho','box','tela','sacada']);
-const SEM_VIDRO_AUTO = new Set(['espelho','tela','plamb']);
+const SEM_VIDRO_AUTO = new Set(['espelho','tela','plamb',
+  'kpiv','kpg1pc','kpg2pc','kpg2lb','kpg1lb45','gpc1v','gpg1lb','gpg2lb']);
+
+/* Tabela de preço fixo por medida (Largura x Altura em mm) das portas de obra —
+   valores das propostas Kasa/Gold já com o acréscimo aplicado. Se a medida
+   digitada estiver na tabela, o preço sugerido é o da tabela (por peça);
+   fora dela, vale o cálculo padrão por m². */
+const TABELA_PRECOS = {
+  kpiv: {'900x2160':5099.04, '1000x2160':5404.70, '1020x2160':5465.78, '1070x2160':5618.74, '1100x2160':5710.36, '1120x2160':5771.70, '1200x2160':6016.28, '1299x2160':6337.12, '1300x2160':6340.16},
+  kpg1pc: {'720x2100':3142.26, '820x2100':3313.65, '920x2100':3483.58, '1020x2100':3653.77, '1120x2100':3823.70, '1220x2100':3995.09},
+  kpg2pc: {'1400x2160':5740.17, '1500x2160':5933.14, '1700x2160':6319.96, '1900x2160':6705.65, '2099x2160':7089.04, '2300x2160':7478.15},
+  kpg2lb: {'1310x2160':6368.46, '1510x2160':6918.14, '1710x2160':7469.21, '1910x2160':8018.63, '2110x2160':8569.70, '2310x2160':9119.38, '2510x2160':9670.19},
+  kpg1lb45: {'700x2159':5250.25, '800x2159':5685.23, '900x2159':6121.94, '1000x2159':6556.93, '1100x2159':6991.91, '1200x2159':7427.16, '1300x2159':7863.60},
+  gpc1v: {'720x2160':2802.54, '820x2160':2989.68, '920x2160':3178.77, '1020x2160':3366.18, '1120x2160':3554.96, '1220x2160':3742.34, '1320x2160':3929.58, '1420x2160':4118.51},
+  gpg1lb: {'760x2160':3065.86, '860x2160':3294.91, '960x2160':3523.72, '1060x2160':3753.27, '1160x2160':3982.24, '1260x2160':4211.02, '1360x2160':4439.85},
+  gpg2lb: {'1310x2160':4905.43, '1410x2160':5135.01, '1510x2160':5363.92, '1610x2160':5592.70, '1640x2160':5657.02, '1710x2160':5822.01, '1810x2160':6051.81, '1840x2160':6116.10, '1910x2160':6280.64, '2040x2160':6573.18, '2090x2160':6691.89},
+  gpg2: {'1310x2160':4006.56, '1410x2160':4149.43, '1510x2160':4288.11, '1610x2160':4429.84, '1710x2160':4568.97, '1810x2160':4708.53},
+  gpc2: {'2000x2160':16953.50, '2600x2160':6544.12, '2930x2160':7157.18},
+};
+
+function precoTabela(tipo, w, h){
+  const t = TABELA_PRECOS[tipo];
+  return t ? (t[w+'x'+h] || null) : null;
+}
 
 // Se o item tiver descrição própria (ex.: tipologia importada de outra proposta),
 // ela vale como nome; senão usa o nome do catálogo
@@ -399,7 +433,7 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
     return '';
   };
 
-  if (tipo==='jc2'||tipo==='jc3'||tipo==='jc4'||tipo==='pc2'||tipo==='pc4'){
+  if (tipo==='jc2'||tipo==='jc3'||tipo==='jc4'||tipo==='pc2'||tipo==='pc4'||tipo==='gpc2'){
     const fw = iw/n;
     for(let i=0;i<n;i++){
       const fx = ix + i*fw;
@@ -425,6 +459,42 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
     interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
       <text x="${ix+iw/2}" y="${iy+ih/2+4}" text-anchor="middle" font-size="11" fill="#999" font-family="Arial">FIXO</text>`;
   }
+  else if (tipo==='kpiv'){ // pivotante com folha cega de lambril
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
+    for(let y=iy+7; y<iy+ih-5; y+=7)
+      interno += `<line x1="${ix+4}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="2"/>`;
+    const px = ix+iw*0.25;
+    interno += `<g stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none">
+        <path d="M${ix+iw-2},${iy+2} L${px+2},${iy+ih/2} L${ix+iw-2},${iy+ih-2}"/></g>
+      <line x1="${px}" y1="${iy}" x2="${px}" y2="${iy+ih}" stroke="#c1272d" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <rect x="${ix+iw-8}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
+  }
+  else if (tipo==='kpg2lb'||tipo==='gpg2lb'||tipo==='kpg2pc'){ // giro 2 folhas cegas (lambril/palheta)
+    const fw = iw/2;
+    for(let i=0;i<2;i++){
+      const fx = ix+i*fw;
+      const dobX = i===0 ? fx+2 : fx+fw-2;
+      const puxX = i===0 ? fx+fw-8 : fx+4;
+      interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
+      for(let y=iy+7; y<iy+ih-5; y+=7)
+        interno += `<line x1="${fx+4}" y1="${y}" x2="${fx+fw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="1.6"/>`;
+      interno += `<g stroke="#c1272d" stroke-width="1.2" stroke-dasharray="5 4" fill="none">
+          <path d="M${i===0?fx+fw-2:fx+2},${iy+2} L${dobX},${iy+ih/2} L${i===0?fx+fw-2:fx+2},${iy+ih-2}"/>
+        </g>
+        <rect x="${puxX}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
+    }
+    if (tipo==='kpg2pc'){ // travessa horizontal (a 1000mm do piso)
+      const ty = iy + ih*Math.max(0.15, Math.min(0.85, 1 - 1000/hmm));
+      interno += `<rect x="${ix}" y="${ty-3}" width="${iw}" height="6" fill="#e9e9ec" stroke="#3a3a3c" stroke-width="1.5"/>`;
+    }
+  }
+  else if (tipo==='gpc1v'){ // correr 1 folha veneziana cega
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
+    for(let y=iy+7; y<iy+ih-5; y+=7)
+      interno += `<line x1="${ix+4}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="1.6"/>`;
+    interno += seta(ix+iw/2, iy+ih*0.5, 'h')
+      + `<rect x="${ix+iw-8}" y="${iy+ih*0.44}" width="4" height="${ih*0.12}" rx="2" fill="#3a3a3c"/>`;
+  }
   else if (tipo==='pa1'||tipo==='ppiv'){
     const px = tipo==='ppiv' ? ix+iw*0.25 : ix;
     interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
@@ -434,7 +504,7 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
       <rect x="${ix+iw-8}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
     if (tipo==='ppiv') interno += `<line x1="${px}" y1="${iy}" x2="${px}" y2="${iy+ih}" stroke="#c1272d" stroke-width="1.5" stroke-dasharray="3 3"/>`;
   }
-  else if (tipo==='pa2'){
+  else if (tipo==='pa2'||tipo==='gpg2'){
     const fw = iw/2;
     for(let i=0;i<2;i++){
       const fx = ix+i*fw;
@@ -507,7 +577,7 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
     }
     interno += `<path d="${pts}" stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none"/>` + seta(ix+iw/2, iy+ih*0.82, 'h');
   }
-  else if (tipo==='plamb'){
+  else if (tipo==='plamb'||tipo==='kpg1pc'||tipo==='kpg1lb45'||tipo==='gpg1lb'){
     interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
     for(let y=iy+7; y<iy+ih-5; y+=7)
       interno += `<line x1="${ix+4}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="2"/>`;
@@ -602,13 +672,14 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
   }
 
   if (!SEM_MARCO.has(tipo)) add(`Perfil de alumínio ${cor} — marco/contramarco`, m2(perimetro*1.05), 'm');
-  if (tipo.startsWith('jc')||tipo.startsWith('pc')||tipo==='jven'||tipo.startsWith('jpers')||tipo.startsWith('ppers')){
+  if (tipo.startsWith('jc')||tipo.startsWith('pc')||tipo==='jven'||tipo.startsWith('jpers')||tipo.startsWith('ppers')||tipo==='gpc2'||tipo==='gpc1v'){
     add(`Perfil de alumínio ${cor} — folhas de correr`, m2(n*2*((w/n)+h)*1.05), 'm');
     add('Roldanas com rolamento', n*2, 'un');
     add('Fecho concha / fecho flush', Math.max(n-1,1), 'un');
     add('Escova de vedação (fita pelo)', m2(n*2*h + 2*w), 'm');
     add('Trilho inferior + guia superior', m2(2*w), 'm');
     if (tipo==='jven') add(`Palhetas veneziana de alumínio ${cor}`, m2(areaVidro*2/3), 'm²');
+    if (tipo==='gpc1v') add(`Palhetas de veneziana cega de alumínio ${cor}`, m2(areaVidro), 'm²');
     if (tipo.startsWith('jpers')||tipo.startsWith('ppers')){
       add(`Caixa da persiana integrada (monobloco) ${cor}`, m2(w), 'm');
       add(`Lâminas de persiana (PVC/alumínio) ${cor}`, m2(areaVidro), 'm²');
@@ -630,9 +701,9 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
     add('Dobradiças reforçadas', n*2, 'un');
     add('Kit pivô e roldana do sistema camarão', 1, 'kit');
     add('Fechadura com maçaneta', 1, 'un');
-  } else if (tipo==='plamb'){
+  } else if (tipo==='plamb'||tipo==='kpg1pc'||tipo==='kpg1lb45'||tipo==='gpg1lb'){
     add(`Perfil de alumínio ${cor} — folha de porta`, m2(2*(w+h)*1.05), 'm');
-    add(`Chapa lambril de alumínio ${cor}`, m2(areaVidro), 'm²');
+    add(tipo==='kpg1pc' ? `Palhetas cegas de alumínio ${cor}` : `Chapa lambril de alumínio ${cor}`, m2(areaVidro), 'm²');
     add('Dobradiças reforçadas', 3, 'un');
     add('Fechadura com cilindro e maçaneta', 1, 'un');
     add('Vedação EPDM / escova', m2(perimetro), 'm');
@@ -663,12 +734,15 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
   } else if (tipo==='jfix'){
     add('Baguete de fixação do vidro', m2(perimetro*0.95), 'm');
     add('Calço de apoio + vedação', 1, 'kit');
-  } else if (tipo==='pa1'||tipo==='pa2'||tipo==='ppiv'){
+  } else if (tipo==='pa1'||tipo==='pa2'||tipo==='ppiv'||tipo==='kpiv'||tipo==='kpg2pc'||tipo==='kpg2lb'||tipo==='gpg2lb'||tipo==='gpg2'){
     add(`Perfil de alumínio ${cor} — folha(s) de porta`, m2(n*2*((w/n)+h)*1.05), 'm');
-    if (tipo==='ppiv'){ add('Kit pivô superior e inferior', 1, 'kit'); }
+    if (tipo==='ppiv'||tipo==='kpiv'){ add('Kit pivô superior e inferior', 1, 'kit'); }
     else { add('Dobradiças reforçadas', n*3, 'un'); }
     add('Fechadura com cilindro e maçaneta', 1, 'un');
     add('Vedação EPDM / escova', m2(perimetro), 'm');
+    if (tipo==='kpiv') add(`Chapa lambril duplo 150mm de alumínio ${cor}`, m2(areaVidro), 'm²');
+    if (tipo==='kpg2lb'||tipo==='gpg2lb') add(`Chapa lambril duplo de alumínio ${cor}`, m2(areaVidro), 'm²');
+    if (tipo==='kpg2pc'){ add(`Palhetas cegas de alumínio ${cor}`, m2(areaVidro), 'm²'); add('Travessa horizontal de reforço', m2(w), 'm'); }
   }
   if (vidro !== 'Sem vidro' && !SEM_VIDRO_AUTO.has(tipo) && tipo!=='espelho'){
     add(`Vidro ${vidro}`, m2(areaVidro), 'm²');
@@ -757,12 +831,17 @@ function atualizarPrevia(){
   // sugestão de preço
   const cfg = getCfg();
   const base = (cfg.precos && cfg.precos[tipo]) || t.preco;
-  if (servico){
+  const fixo = precoTabela(tipo, w, h);
+  if (fixo){
+    document.getElementById('sugestaoPreco').textContent =
+      `Sugestão: ${R$(fixo)} por peça (tabela de medidas)`;
+  } else if (servico){
     document.getElementById('sugestaoPreco').textContent = `Sugestão: ${R$(base)} (preço base do serviço)`;
   } else {
     const area = Math.max((w*h)/1e6, 1);
     document.getElementById('sugestaoPreco').textContent =
-      `Sugestão: ${R$(area*base)} (${area.toFixed(2).replace('.',',')} m² × ${R$(base)}/m²)`;
+      `Sugestão: ${R$(area*base)} (${area.toFixed(2).replace('.',',')} m² × ${R$(base)}/m²)`
+      + (TABELA_PRECOS[tipo] ? ' — medida fora da tabela' : '');
   }
 }
 
@@ -783,7 +862,7 @@ function adicionarItem(){
   if(!preco){
     const cfg = getCfg();
     const base = (cfg.precos && cfg.precos[tipo]) || TIPOS[tipo].preco;
-    preco = servico ? base : Math.max((w*h)/1e6,1)*base;
+    preco = precoTabela(tipo, w, h) || (servico ? base : Math.max((w*h)/1e6,1)*base);
     if(!confirm(`Preço unitário não informado.\nUsar a sugestão de ${R$(preco)}?`)) return;
   }
   itens.push({
@@ -1128,8 +1207,8 @@ function pdfSalvo(id){
   document.getElementById('btnSair').style.display = 'inline-block';
   montarLogo(document.getElementById('logoTopo'), 110);
   const sel = document.getElementById('itTipo');
-  const grupos = {janela:'— JANELAS —', porta:'— PORTAS —', vidro:'— BOX / VIDROS / ESPELHOS —', servico:'— SERVIÇOS —'};
-  ['janela','porta','vidro','servico'].forEach(cat=>{
+  const grupos = {janela:'— JANELAS —', porta:'— PORTAS —', tabela:'— PORTAS DE OBRA (TABELA DE MEDIDAS) —', vidro:'— BOX / VIDROS / ESPELHOS —', servico:'— SERVIÇOS —'};
+  ['janela','porta','tabela','vidro','servico'].forEach(cat=>{
     const og = document.createElement('optgroup'); og.label = grupos[cat];
     Object.entries(TIPOS).filter(([k,t])=>t.cat===cat).forEach(([k,t])=>{
       const op = document.createElement('option'); op.value=k; op.textContent=t.nome; og.appendChild(op);
