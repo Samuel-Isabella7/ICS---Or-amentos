@@ -162,6 +162,7 @@
         <div class="linha" style="margin-top:10px">
           <div class="campo curto"><label>Largura (mm)</label><input id="itLarg" type="number" value="1200" oninput="atualizarPrevia()"></div>
           <div class="campo curto"><label>Altura (mm)</label><input id="itAlt" type="number" value="1000" oninput="atualizarPrevia()"></div>
+          <div class="campo curto" id="campoFolhas" style="display:none"><label>Nº de Folhas</label><input id="itFolhas" type="number" value="4" min="2" max="12" oninput="atualizarPrevia()"></div>
           <div class="campo curto"><label>Quantidade</label><input id="itQtd" type="number" value="1" min="1" oninput="atualizarPrevia()"></div>
         </div>
         <div class="linha" style="margin-top:10px">
@@ -358,7 +359,7 @@ const TIPOS = {
   // Box, vidros e espelhos
   'box':  {nome:'Box de Banheiro (fixo + porta de correr)',folhas:2, cat:'vidro',  preco:750},
   'sacada':{nome:'Fechamento de Sacada — Cortina de Vidro',folhas:6, cat:'vidro',  preco:1400},
-  'gcorpo':{nome:'Guarda-Corpo de Vidro',                  folhas:3, cat:'vidro',  preco:1100},
+  'gcorpo':{nome:'Guarda-Corpo de Vidro (escada)',         folhas:4, cat:'vidro',  preco:1100, folhasVar:true},
   'espelho':{nome:'Espelho sob Medida',                    folhas:1, cat:'vidro',  preco:650},
   // Serviços (preço base por unidade, sem desenho técnico)
   'avulso':{nome:'Serviço / Item Personalizado',           folhas:0, cat:'servico', preco:100},
@@ -414,7 +415,7 @@ function desenhoServico(maxW=250){
   </svg>`;
 }
 
-function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
+function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190, folhas){
   if ((TIPOS[tipo]||{}).cat === 'servico') return desenhoServico(maxW);
   wmm = Math.max(Number(wmm)||100, 100);
   hmm = Math.max(Number(hmm)||100, 100);
@@ -433,7 +434,8 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
   const vidro = `fill="url(#gvidro)"`;
   let interno = '';
   const t = TIPOS[tipo] || TIPOS['jfix'];
-  const n = t.folhas;
+  let n = t.folhas;
+  if (t.folhasVar && folhas) n = Math.max(2, Math.min(12, Number(folhas)||n));
 
   const seta = (cx,cy,dir)=>{ // seta horizontal dupla
     const s=9;
@@ -636,12 +638,29 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
     interno += seta(ix+iw*0.62, iy+ih/2, 'h')
       + `<path d="M${ix+fw-2},${iy+2} L${ix+2},${iy+ih/2} L${ix+fw-2},${iy+ih-2}" stroke="#c1272d" stroke-width="1.2" stroke-dasharray="4 3" fill="none"/>`;
   }
-  else if (tipo==='gcorpo'){
-    const np = 3, gap = 5, fw = (iw-gap*(np-1))/np;
-    for(let i=0;i<np;i++){
-      const fx = ix+i*(fw+gap);
-      interno += `<rect x="${fx}" y="${iy}" width="${fw}" height="${ih-8}" ${vidro} stroke="#7a7a7e" stroke-width="2"/>
-        <circle cx="${fx+fw*0.3}" cy="${iy+ih-3}" r="3.4" fill="#9aa0a6"/><circle cx="${fx+fw*0.7}" cy="${iy+ih-3}" r="3.4" fill="#9aa0a6"/>`;
+  else if (tipo==='gcorpo'){ // guarda-corpo de vidro acompanhando a escada
+    const gap = 4, fw = (iw-gap*(n-1))/n;
+    const rise = ih*0.5;                    // subida da escada ao longo da largura
+    const yb = iy + ih - 2;                 // base no pé da escada
+    const diag = x => yb - (x-ix)/iw*rise;  // linha do piso da escada
+    const hp = ih*0.45;                     // altura do vidro
+    // degraus ao fundo
+    const ndeg = Math.max(n*2, 6), degw = iw/ndeg, degh = rise/ndeg;
+    let dpts = `M${ix},${yb}`;
+    for(let i=0;i<ndeg;i++){
+      const x1 = ix+i*degw, y1 = yb-i*degh;
+      dpts += ` L${x1},${y1-degh} L${x1+degw},${y1-degh}`;
+    }
+    interno += `<path d="${dpts}" fill="none" stroke="#cdd1d6" stroke-width="1.3"/>
+      <line x1="${ix}" y1="${yb}" x2="${ix+iw}" y2="${yb-rise}" stroke="#6f7377" stroke-width="2"/>
+      <line x1="${ix+iw}" y1="${yb-rise}" x2="${ix+iw+COTA*0.4}" y2="${yb-rise}" stroke="#8b8f94" stroke-width="1.5"/>`;
+    // folhas de vidro em degrau, com botões de fixação
+    for(let i=0;i<n;i++){
+      const fx0 = ix+i*(fw+gap), fx1 = fx0+fw;
+      const topo = diag(fx1) - hp;
+      interno += `<polygon points="${fx0},${topo} ${fx1},${topo} ${fx1},${diag(fx1)} ${fx0},${diag(fx0)}" ${vidro} stroke="#7a7a7e" stroke-width="2"/>
+        <circle cx="${fx0+fw*0.3}" cy="${diag(fx0+fw*0.3)-6}" r="3" fill="#9aa0a6"/>
+        <circle cx="${fx0+fw*0.7}" cy="${diag(fx0+fw*0.7)-6}" r="3" fill="#9aa0a6"/>`;
     }
   }
   else if (tipo==='espelho'){
@@ -671,7 +690,7 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
     <pattern id="pontos" width="5" height="5" patternUnits="userSpaceOnUse">
       <rect width="5" height="5" fill="#f7f7f8"/><circle cx="1.4" cy="1.4" r="0.7" fill="#b9bec4"/>
     </pattern></defs>
-    <rect x="${x0}" y="${y0}" width="${dw}" height="${dh}" fill="#e9e9ec" stroke="#3a3a3c" stroke-width="3"/>
+    ${tipo==='gcorpo' ? '' : `<rect x="${x0}" y="${y0}" width="${dw}" height="${dh}" fill="#e9e9ec" stroke="#3a3a3c" stroke-width="3"/>`}
     ${interno}${cotas}
   </svg>`;
 }
@@ -679,10 +698,11 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
 /* =====================================================
    LISTA DE MATERIAIS (calculada pelas medidas)
 ===================================================== */
-function calcularMateriais(tipo, wmm, hmm, cor, vidro){
+function calcularMateriais(tipo, wmm, hmm, cor, vidro, folhas){
   const t = TIPOS[tipo]; if(!t) return [];
   const w = wmm/1000, h = hmm/1000;
-  const n = t.folhas;
+  let n = t.folhas;
+  if (t.folhasVar && folhas) n = Math.max(2, Math.min(12, Number(folhas)||n));
   const perimetro = 2*(w+h);
   const areaVidro = Math.max(w*h, 0);
   const m2 = x => x.toFixed(2).replace('.',',');
@@ -752,7 +772,8 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
     add('Kit cortina de vidro (carrinhos, pivôs e travas)', 1, 'kit');
     add('Perfil U e vedações', m2(perimetro), 'm');
   } else if (tipo==='gcorpo'){
-    add('Botões de fixação em aço inox', t.folhas*2, 'un');
+    add(`Folhas de vidro do guarda-corpo`, n, 'un');
+    add('Botões de fixação em aço inox', n*2, 'un');
     add(`Perfil U de base ${cor}`, m2(w), 'm');
     add('Silicone estrutural', 1, 'kit');
   } else if (tipo==='espelho'){
@@ -857,12 +878,14 @@ function atualizarPrevia(){
   const servico = t.cat === 'servico';
   document.getElementById('linhaDescricao').style.display = tipo==='avulso' ? 'flex' : 'none';
   if (t.linha) document.getElementById('itLinha').value = t.linha; // linha padrão do produto
+  document.getElementById('campoFolhas').style.display = t.folhasVar ? '' : 'none';
+  const folhas = t.folhasVar ? (Number(document.getElementById('itFolhas').value)||t.folhas) : null;
   const w = Number(document.getElementById('itLarg').value)||0;
   const h = Number(document.getElementById('itAlt').value)||0;
-  document.getElementById('previaDesenho').innerHTML = desenharEsquadria(tipo, w, h);
+  document.getElementById('previaDesenho').innerHTML = desenharEsquadria(tipo, w, h, 250, 190, folhas);
   const cor = document.getElementById('itCor').value;
   const vidro = document.getElementById('itVidro').value;
-  const mats = calcularMateriais(tipo, w, h, cor, vidro);
+  const mats = calcularMateriais(tipo, w, h, cor, vidro, folhas);
   document.getElementById('previaMat').innerHTML = mats.length
     ? '<b>Materiais estimados:</b><br>' + mats.slice(0,4).map(m=>`• ${m.item}`).join('<br>') + (mats.length>4?`<br>• … e mais ${mats.length-4} itens`:'')
     : '<b>Materiais:</b> conforme a descrição do serviço.';
@@ -905,6 +928,7 @@ function adicionarItem(){
   }
   itens.push({
     tipo, w: w||0, h: h||0, qtd, preco,
+    folhas: TIPOS[tipo].folhasVar ? (Number(document.getElementById('itFolhas').value)||TIPOS[tipo].folhas) : null,
     desc: document.getElementById('itDescricao').value.trim(),
     local: document.getElementById('itLocal').value,
     cor: document.getElementById('itCor').value,
@@ -931,7 +955,7 @@ function renderItens(){
     itens.forEach((it,i)=>{
       const servico = TIPOS[it.tipo].cat === 'servico';
       html += `<tr>
-        <td class="mini-des">${desenharEsquadria(it.tipo, it.w, it.h, 80, 62)}</td>
+        <td class="mini-des">${desenharEsquadria(it.tipo, it.w, it.h, 80, 62, it.folhas)}</td>
         <td><b>${nomeItem(it)}</b>${(it.linha&&!servico)||it.obs?`<br><small style="color:#888">${[!servico?it.linha:'',it.obs].filter(Boolean).join(' — ')}</small>`:''}</td>
         <td>${it.local||'—'}</td>
         <td>${it.w&&it.h ? `${it.w} × ${it.h} mm` : '—'}</td>
@@ -1133,7 +1157,7 @@ function montarPaginaPDF(o){
   let itensHtml = '';
   o.itens.forEach((it,i)=>{
     const servico = TIPOS[it.tipo].cat === 'servico';
-    const mats = calcularMateriais(it.tipo, it.w, it.h, it.cor, it.vidro);
+    const mats = calcularMateriais(it.tipo, it.w, it.h, it.cor, it.vidro, it.folhas);
     const tabelaMat = mats.length ? `
           <table class="mat">
             <thead><tr><th>Materiais utilizados</th><th style="width:70px;text-align:right">Qtd</th><th style="width:40px">Un</th></tr></thead>
@@ -1147,7 +1171,7 @@ function montarPaginaPDF(o){
       </div>
       <div class="item-corpo">
         <div class="item-des">
-          ${desenharEsquadria(it.tipo, it.w, it.h, 210, 155)}
+          ${desenharEsquadria(it.tipo, it.w, it.h, 210, 155, it.folhas)}
           <div class="rotulo">${servico ? 'Serviço — sem desenho técnico' : 'Desenho ilustrativo — vista externa'}</div>
         </div>
         <div class="item-info">
