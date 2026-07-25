@@ -165,11 +165,21 @@
           <div class="campo curto"><label>Quantidade</label><input id="itQtd" type="number" value="1" min="1" oninput="atualizarPrevia()"></div>
         </div>
         <div class="linha" style="margin-top:10px">
-          <div class="campo"><label>Cor do Alumínio</label>
-            <select id="itCor"><option>Branco</option><option>Preto</option><option>Bronze</option><option>Anodizado Fosco</option><option>Amadeirado</option></select>
+          <div class="campo"><label>Cor / Acabamento do Alumínio</label>
+            <select id="itCor">
+              <option>Branco</option><option>Preto</option><option>Bronze</option>
+              <option>Branco Brilhante RAL9003 — Pintura Eletrostática</option>
+              <option>Preto RAL9005 — Pintura Eletrostática</option>
+              <option>Cinza — Pintura Eletrostática</option>
+              <option>Bronze — Pintura Eletrostática</option>
+              <option>Anodizado Fosco</option><option>Amadeirado</option>
+            </select>
+          </div>
+          <div class="campo curto"><label>Linha do Perfil</label>
+            <select id="itLinha"><option>Linha Gold</option><option>Linha Suprema</option><option>Linha 42</option><option>Linha GOS</option><option>Linha 25</option></select>
           </div>
           <div class="campo"><label>Tipo de Vidro</label>
-            <select id="itVidro"><option>Incolor 4mm</option><option>Incolor 6mm</option><option>Fumê 4mm</option><option>Fumê 6mm</option><option>Verde 6mm</option><option>Temperado Incolor 8mm</option><option>Mini Boreal 4mm</option><option>Sem vidro</option></select>
+            <select id="itVidro"><option>Incolor 4mm</option><option>Incolor 6mm</option><option>Fumê 4mm</option><option>Fumê 6mm</option><option>Verde 6mm</option><option>Temperado Incolor 8mm</option><option>Mini Boreal 4mm</option><option>Laminado 8mm (5+3) PVB</option><option>Laminado Acústico 5+5mm PVB</option><option>Sem vidro</option></select>
           </div>
         </div>
         <div class="linha" style="margin-top:10px">
@@ -335,16 +345,16 @@ const TIPOS = {
   'plamb':{nome:'Porta de Alumínio Lambril',               folhas:1, cat:'porta',  preco:850},
   'ppers2':{nome:'Porta Integrada com Persiana — 2 Folhas de Correr', folhas:2, cat:'porta', preco:1400},
   // Portas de obra — importadas das propostas (Kasa Linha 42 / Linha Gold), com tabela de preço por medida
-  'kpiv':    {nome:'Porta Pivotante 1 Folha — Lambril Duplo 150mm (PIV100)',            folhas:1, cat:'tabela', preco:2407},
-  'kpg1pc':  {nome:'Porta de Giro 1 Folha — Palheta Cega (PG100)',                      folhas:1, cat:'tabela', preco:1783},
-  'kpg2pc':  {nome:'Porta de Giro 2 Folhas — Travessa e Palheta Cega 45/45 (PG200)',    folhas:2, cat:'tabela', preco:1692},
-  'kpg2lb':  {nome:'Porta de Giro 2 Folhas — Lambril Duplo 100mm (PG200)',              folhas:2, cat:'tabela', preco:1976},
-  'kpg1lb45':{nome:'Porta de Giro 1 Folha — Lambril Duplo 100mm 45°/45° (PG100)',       folhas:1, cat:'tabela', preco:3081},
-  'gpc1v':   {nome:'Porta de Correr 1 Folha — Veneziana Cega, corre atrás da parede (Gold)', folhas:1, cat:'tabela', preco:1529},
-  'gpg1lb':  {nome:'Porta de Giro 1 Folha — Lambri IN205 (Gold)',                       folhas:1, cat:'tabela', preco:1661},
-  'gpg2lb':  {nome:'Porta de Giro 2 Folhas — Lambri IN205 (Gold)',                      folhas:2, cat:'tabela', preco:1584},
-  'gpg2':    {nome:'Porta de Giro 2 Folhas — Vidro (Gold)',                             folhas:2, cat:'tabela', preco:1301},
-  'gpc2':    {nome:'Porta de Correr 2 Folhas — corre atrás da parede (Gold)',           folhas:2, cat:'tabela', preco:2074},
+  'kpiv':    {nome:'Porta Pivotante 1 Folha — Lambril Duplo 150mm (PIV100)',            folhas:1, cat:'tabela', preco:2407, linha:'Linha 42'},
+  'kpg1pc':  {nome:'Porta de Giro 1 Folha — Palheta Cega (PG100)',                      folhas:1, cat:'tabela', preco:1783, linha:'Linha 42'},
+  'kpg2pc':  {nome:'Porta de Giro 2 Folhas — Travessa e Palheta Cega 45/45 (PG200)',    folhas:2, cat:'tabela', preco:1692, linha:'Linha 42'},
+  'kpg2lb':  {nome:'Porta de Giro 2 Folhas — Lambril Duplo 100mm (PG200)',              folhas:2, cat:'tabela', preco:1976, linha:'Linha 42'},
+  'kpg1lb45':{nome:'Porta de Giro 1 Folha — Lambril Duplo 100mm 45°/45° (PG100)',       folhas:1, cat:'tabela', preco:3081, linha:'Linha 42'},
+  'gpc1v':   {nome:'Porta de Correr 1 Folha — Veneziana Cega, corre atrás da parede (Gold)', folhas:1, cat:'tabela', preco:1529, linha:'Linha Gold'},
+  'gpg1lb':  {nome:'Porta de Giro 1 Folha — Lambri IN205 (Gold)',                       folhas:1, cat:'tabela', preco:1661, linha:'Linha Gold'},
+  'gpg2lb':  {nome:'Porta de Giro 2 Folhas — Lambri IN205 (Gold)',                      folhas:2, cat:'tabela', preco:1584, linha:'Linha Gold'},
+  'gpg2':    {nome:'Porta de Giro 2 Folhas — Vidro (Gold)',                             folhas:2, cat:'tabela', preco:1301, linha:'Linha Gold'},
+  'gpc2':    {nome:'Porta de Correr 2 Folhas — corre atrás da parede (Gold)',           folhas:2, cat:'tabela', preco:2074, linha:'Linha Gold'},
   // Box, vidros e espelhos
   'box':  {nome:'Box de Banheiro (fixo + porta de correr)',folhas:2, cat:'vidro',  preco:750},
   'sacada':{nome:'Fechamento de Sacada — Cortina de Vidro',folhas:6, cat:'vidro',  preco:1400},
@@ -445,7 +455,7 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
   else if (tipo==='jmax'){
     interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>
       <g stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none">
-        <path d="M${ix+2},${iy+ih-2} L${ix+iw/2},${iy+2} L${ix+iw-2},${iy+ih-2}"/>
+        <path d="M${ix+2},${iy+2} L${ix+iw/2},${iy+ih-2} L${ix+iw-2},${iy+2}"/>
       </g>`;
   }
   else if (tipo==='jbas'){
@@ -469,17 +479,21 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
       <line x1="${px}" y1="${iy}" x2="${px}" y2="${iy+ih}" stroke="#c1272d" stroke-width="1.5" stroke-dasharray="3 3"/>
       <rect x="${ix+iw-8}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
   }
-  else if (tipo==='kpg2lb'||tipo==='gpg2lb'||tipo==='kpg2pc'){ // giro 2 folhas cegas (lambril/palheta)
+  else if (tipo==='kpg2lb'||tipo==='gpg2lb'||tipo==='kpg2pc'||tipo==='gpg2'){ // giro 2 folhas — X tracejado por folha (como nos desenhos das propostas)
     const fw = iw/2;
     for(let i=0;i<2;i++){
       const fx = ix+i*fw;
-      const dobX = i===0 ? fx+2 : fx+fw-2;
       const puxX = i===0 ? fx+fw-8 : fx+4;
-      interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
-      for(let y=iy+7; y<iy+ih-5; y+=7)
-        interno += `<line x1="${fx+4}" y1="${y}" x2="${fx+fw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="1.6"/>`;
-      interno += `<g stroke="#c1272d" stroke-width="1.2" stroke-dasharray="5 4" fill="none">
-          <path d="M${i===0?fx+fw-2:fx+2},${iy+2} L${dobX},${iy+ih/2} L${i===0?fx+fw-2:fx+2},${iy+ih-2}"/>
+      if (tipo==='gpg2'){
+        interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>`;
+      } else {
+        interno += `<rect x="${fx+1.5}" y="${iy+1.5}" width="${fw-3}" height="${ih-3}" fill="${tipo==='kpg2pc'?'url(#gvidro)':'#eceff1'}" stroke="#7a7a7e" stroke-width="2.5"/>`;
+        for(let y=iy+7; y<iy+ih-5; y+=7)
+          interno += `<line x1="${fx+4}" y1="${y}" x2="${fx+fw-4}" y2="${y}" stroke="${tipo==='kpg2pc'?'#9fc4d8':'#b6bcc2'}" stroke-width="1.6"/>`;
+      }
+      interno += `<g stroke="#c1272d" stroke-width="1.1" stroke-dasharray="5 4" fill="none">
+          <line x1="${fx+3}" y1="${iy+3}" x2="${fx+fw-3}" y2="${iy+ih-3}"/>
+          <line x1="${fx+fw-3}" y1="${iy+3}" x2="${fx+3}" y2="${iy+ih-3}"/>
         </g>
         <rect x="${puxX}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
     }
@@ -488,12 +502,32 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
       interno += `<rect x="${ix}" y="${ty-3}" width="${iw}" height="6" fill="#e9e9ec" stroke="#3a3a3c" stroke-width="1.5"/>`;
     }
   }
-  else if (tipo==='gpc1v'){ // correr 1 folha veneziana cega
-    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
+  else if (tipo==='kpg1pc'||tipo==='kpg1lb45'||tipo==='gpg1lb'){ // giro 1 folha cega — X tracejado (como nas propostas)
+    const escuro = tipo==='kpg1pc';
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="${escuro?'#d7dade':'#eceff1'}" stroke="#7a7a7e" stroke-width="2.5"/>`;
     for(let y=iy+7; y<iy+ih-5; y+=7)
-      interno += `<line x1="${ix+4}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="1.6"/>`;
-    interno += seta(ix+iw/2, iy+ih*0.5, 'h')
-      + `<rect x="${ix+iw-8}" y="${iy+ih*0.44}" width="4" height="${ih*0.12}" rx="2" fill="#3a3a3c"/>`;
+      interno += `<line x1="${ix+4}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="${escuro?'#9aa0a6':'#b6bcc2'}" stroke-width="1.8"/>`;
+    interno += `<g stroke="#c1272d" stroke-width="1.1" stroke-dasharray="5 4" fill="none">
+        <line x1="${ix+3}" y1="${iy+3}" x2="${ix+iw-3}" y2="${iy+ih-3}"/>
+        <line x1="${ix+iw-3}" y1="${iy+3}" x2="${ix+3}" y2="${iy+ih-3}"/>
+      </g>
+      <rect x="${ix+iw-8}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
+  }
+  else if (tipo==='gpc1v'){ // correr 1 folha veneziana — corre por trás da parede (desenho da proposta)
+    const fw = iw/2;
+    interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${fw-1.5}" height="${ih-3}" fill="url(#pontos)" stroke="#7a7a7e" stroke-width="1.5"/>
+      <rect x="${ix+fw}" y="${iy+1.5}" width="${fw-1.5}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
+    for(let y=iy+7; y<iy+ih-5; y+=7)
+      interno += `<line x1="${ix+fw+3}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="1.6"/>`;
+    const cxs = ix+fw+fw/2, cys = iy+ih/2;
+    interno += `<g stroke="#c1272d" stroke-width="1.1" stroke-dasharray="5 4" fill="none">
+        <line x1="${ix+fw+3}" y1="${iy+3}" x2="${ix+iw-3}" y2="${iy+ih-3}"/>
+        <line x1="${ix+iw-3}" y1="${iy+3}" x2="${ix+fw+3}" y2="${iy+ih-3}"/>
+      </g>
+      <g stroke="#3a3a3c" stroke-width="1.6" fill="#ffffff">
+        <line x1="${cxs+10}" y1="${cys}" x2="${cxs-6}" y2="${cys}"/>
+        <path d="M${cxs-13},${cys} l8,-5 v10 z"/>
+      </g>`;
   }
   else if (tipo==='pa1'||tipo==='ppiv'){
     const px = tipo==='ppiv' ? ix+iw*0.25 : ix;
@@ -504,7 +538,7 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
       <rect x="${ix+iw-8}" y="${iy+ih*0.46}" width="4" height="${ih*0.1}" rx="2" fill="#3a3a3c"/>`;
     if (tipo==='ppiv') interno += `<line x1="${px}" y1="${iy}" x2="${px}" y2="${iy+ih}" stroke="#c1272d" stroke-width="1.5" stroke-dasharray="3 3"/>`;
   }
-  else if (tipo==='pa2'||tipo==='gpg2'){
+  else if (tipo==='pa2'){
     const fw = iw/2;
     for(let i=0;i<2;i++){
       const fx = ix+i*fw;
@@ -577,7 +611,7 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
     }
     interno += `<path d="${pts}" stroke="#c1272d" stroke-width="1.3" stroke-dasharray="5 4" fill="none"/>` + seta(ix+iw/2, iy+ih*0.82, 'h');
   }
-  else if (tipo==='plamb'||tipo==='kpg1pc'||tipo==='kpg1lb45'||tipo==='gpg1lb'){
+  else if (tipo==='plamb'){
     interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#eceff1" stroke="#7a7a7e" stroke-width="2.5"/>`;
     for(let y=iy+7; y<iy+ih-5; y+=7)
       interno += `<line x1="${ix+4}" y1="${y}" x2="${ix+iw-4}" y2="${y}" stroke="#b6bcc2" stroke-width="2"/>`;
@@ -633,7 +667,10 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     <defs><linearGradient id="gvidro" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#dceef7"/><stop offset="0.5" stop-color="#c2e0ef"/><stop offset="1" stop-color="#e8f4fa"/>
-    </linearGradient></defs>
+    </linearGradient>
+    <pattern id="pontos" width="5" height="5" patternUnits="userSpaceOnUse">
+      <rect width="5" height="5" fill="#f7f7f8"/><circle cx="1.4" cy="1.4" r="0.7" fill="#b9bec4"/>
+    </pattern></defs>
     <rect x="${x0}" y="${y0}" width="${dw}" height="${dh}" fill="#e9e9ec" stroke="#3a3a3c" stroke-width="3"/>
     ${interno}${cotas}
   </svg>`;
@@ -819,6 +856,7 @@ function atualizarPrevia(){
   const t = TIPOS[tipo];
   const servico = t.cat === 'servico';
   document.getElementById('linhaDescricao').style.display = tipo==='avulso' ? 'flex' : 'none';
+  if (t.linha) document.getElementById('itLinha').value = t.linha; // linha padrão do produto
   const w = Number(document.getElementById('itLarg').value)||0;
   const h = Number(document.getElementById('itAlt').value)||0;
   document.getElementById('previaDesenho').innerHTML = desenharEsquadria(tipo, w, h);
@@ -870,6 +908,7 @@ function adicionarItem(){
     desc: document.getElementById('itDescricao').value.trim(),
     local: document.getElementById('itLocal').value,
     cor: document.getElementById('itCor').value,
+    linha: document.getElementById('itLinha').value,
     vidro: document.getElementById('itVidro').value,
     obs: document.getElementById('itObs').value,
   });
@@ -893,7 +932,7 @@ function renderItens(){
       const servico = TIPOS[it.tipo].cat === 'servico';
       html += `<tr>
         <td class="mini-des">${desenharEsquadria(it.tipo, it.w, it.h, 80, 62)}</td>
-        <td><b>${nomeItem(it)}</b>${it.obs?`<br><small style="color:#888">${it.obs}</small>`:''}</td>
+        <td><b>${nomeItem(it)}</b>${(it.linha&&!servico)||it.obs?`<br><small style="color:#888">${[!servico?it.linha:'',it.obs].filter(Boolean).join(' — ')}</small>`:''}</td>
         <td>${it.local||'—'}</td>
         <td>${it.w&&it.h ? `${it.w} × ${it.h} mm` : '—'}</td>
         <td>${servico ? '—' : it.cor}</td><td>${servico ? '—' : it.vidro}</td>
@@ -1115,7 +1154,8 @@ function montarPaginaPDF(o){
           <table class="espec">
             ${servico && it.tipo==='avulso' ? `<tr><td>Descrição</td><td>${it.desc||'—'}</td></tr>` : ''}
             ${!servico ? `<tr><td>Medidas (L×A)</td><td>${it.w} × ${it.h} mm &nbsp;(${((it.w*it.h)/1e6).toFixed(2).replace('.',',')} m²)</td></tr>
-            <tr><td>Cor do alumínio</td><td>${it.cor}</td></tr>
+            <tr><td>Cor / acabamento</td><td>${it.cor}</td></tr>
+            ${it.linha?`<tr><td>Linha do perfil</td><td>${it.linha}</td></tr>`:''}
             <tr><td>Vidro</td><td>${it.vidro}</td></tr>` : (it.w&&it.h ? `<tr><td>Medidas (L×A)</td><td>${it.w} × ${it.h} mm</td></tr>` : '')}
             ${it.obs?`<tr><td>Observações</td><td>${it.obs}</td></tr>`:''}
           </table>
