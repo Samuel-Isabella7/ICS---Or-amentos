@@ -351,8 +351,10 @@ const TIPOS = {
 const SEM_MARCO = new Set(['gcorpo','espelho','box','tela','sacada']);
 const SEM_VIDRO_AUTO = new Set(['espelho','tela','plamb']);
 
+// Se o item tiver descrição própria (ex.: tipologia importada de outra proposta),
+// ela vale como nome; senão usa o nome do catálogo
 function nomeItem(it){
-  return (it.tipo==='avulso' && it.desc) ? it.desc : TIPOS[it.tipo].nome;
+  return it.desc ? it.desc : TIPOS[it.tipo].nome;
 }
 
 /* =====================================================
