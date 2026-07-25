@@ -322,6 +322,8 @@ const TIPOS = {
   'jfix': {nome:'Janela / Painel Fixo',                    folhas:1, cat:'janela', preco:450},
   'jguil':{nome:'Janela Guilhotina',                       folhas:2, cat:'janela', preco:700},
   'jven': {nome:'Janela Veneziana de Correr — 3 Folhas',   folhas:3, cat:'janela', preco:850},
+  'jpers2':{nome:'Janela Integrada com Persiana — 2 Folhas',folhas:2, cat:'janela', preco:1100},
+  'jpers3':{nome:'Janela Integrada com Persiana — 3 Folhas',folhas:3, cat:'janela', preco:1200},
   'tela': {nome:'Tela Mosquiteira',                        folhas:1, cat:'janela', preco:250},
   // Portas
   'pc2':  {nome:'Porta de Correr — 2 Folhas',              folhas:2, cat:'porta',  preco:800},
@@ -331,6 +333,7 @@ const TIPOS = {
   'ppiv': {nome:'Porta Pivotante',                         folhas:1, cat:'porta',  preco:1200},
   'pcam': {nome:'Porta Camarão (dobrável)',                folhas:4, cat:'porta',  preco:1000},
   'plamb':{nome:'Porta de Alumínio Lambril',               folhas:1, cat:'porta',  preco:850},
+  'ppers2':{nome:'Porta Integrada com Persiana — 2 Folhas de Correr', folhas:2, cat:'porta', preco:1400},
   // Box, vidros e espelhos
   'box':  {nome:'Box de Banheiro (fixo + porta de correr)',folhas:2, cat:'vidro',  preco:750},
   'sacada':{nome:'Fechamento de Sacada — Cortina de Vidro',folhas:6, cat:'vidro',  preco:1400},
@@ -464,6 +467,26 @@ function desenharEsquadria(tipo, wmm, hmm, maxW=250, maxH=190){
       }
     }
   }
+  else if (tipo==='jpers2'||tipo==='jpers3'||tipo==='ppers2'){
+    const caixaH = Math.max(ih*0.16, 14);   // caixa da persiana no topo
+    const py = iy + caixaH, ph = ih - caixaH;
+    const persH = ph*0.35;                  // persiana parcialmente descida
+    const fw = iw/n;
+    interno += `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${caixaH-3}" fill="#e0e0e3" stroke="#7a7a7e" stroke-width="2"/>
+      <text x="${ix+iw/2}" y="${iy+caixaH/2+3}" text-anchor="middle" font-size="7.5" fill="#8a8a8e" font-family="Arial" letter-spacing="1">CAIXA DA PERSIANA</text>`;
+    for(let i=0;i<n;i++){
+      const fx = ix + i*fw;
+      interno += `<rect x="${fx+1.5}" y="${py+1.5}" width="${fw-3}" height="${ph-3}" ${vidro} stroke="#7a7a7e" stroke-width="2.5"/>`;
+      interno += seta(fx+fw/2, py+persH+(ph-persH)/2, 'h');
+      if(i>0) interno += `<rect x="${fx-2}" y="${py+persH+(ph-persH)*0.44}" width="4" height="${ph*0.12}" rx="2" fill="#3a3a3c"/>`; // puxador
+    }
+    interno += `<rect x="${ix+2}" y="${py+1.5}" width="${iw-4}" height="${persH}" fill="#eceff1" stroke="#7a7a7e" stroke-width="1.5"/>`;
+    for(let y=py+5; y<py+persH-2; y+=5)
+      interno += `<line x1="${ix+3.5}" y1="${y}" x2="${ix+iw-3.5}" y2="${y}" stroke="#b6bcc2" stroke-width="1.6"/>`;
+    interno += `<g stroke="#555" stroke-width="1.2" fill="#555">
+      <line x1="${ix+iw*0.5}" y1="${py+persH+3}" x2="${ix+iw*0.5}" y2="${py+persH+13}"/>
+      <path d="M${ix+iw*0.5},${py+persH+13} l-3,-5 h6 z"/></g>`;
+  }
   else if (tipo==='tela'){
     interno = `<rect x="${ix+1.5}" y="${iy+1.5}" width="${iw-3}" height="${ih-3}" fill="#f6f8f9" stroke="#7a7a7e" stroke-width="2.5"/>`;
     for(let x=ix+7; x<ix+iw-3; x+=7) interno += `<line x1="${x}" y1="${iy+3}" x2="${x}" y2="${iy+ih-3}" stroke="#c9d2d8" stroke-width="0.8"/>`;
@@ -577,13 +600,20 @@ function calcularMateriais(tipo, wmm, hmm, cor, vidro){
   }
 
   if (!SEM_MARCO.has(tipo)) add(`Perfil de alumínio ${cor} — marco/contramarco`, m2(perimetro*1.05), 'm');
-  if (tipo.startsWith('jc')||tipo.startsWith('pc')||tipo==='jven'){
+  if (tipo.startsWith('jc')||tipo.startsWith('pc')||tipo==='jven'||tipo.startsWith('jpers')||tipo.startsWith('ppers')){
     add(`Perfil de alumínio ${cor} — folhas de correr`, m2(n*2*((w/n)+h)*1.05), 'm');
     add('Roldanas com rolamento', n*2, 'un');
     add('Fecho concha / fecho flush', Math.max(n-1,1), 'un');
     add('Escova de vedação (fita pelo)', m2(n*2*h + 2*w), 'm');
     add('Trilho inferior + guia superior', m2(2*w), 'm');
     if (tipo==='jven') add(`Palhetas veneziana de alumínio ${cor}`, m2(areaVidro*2/3), 'm²');
+    if (tipo.startsWith('jpers')||tipo.startsWith('ppers')){
+      add(`Caixa da persiana integrada (monobloco) ${cor}`, m2(w), 'm');
+      add(`Lâminas de persiana (PVC/alumínio) ${cor}`, m2(areaVidro), 'm²');
+      add('Guias laterais da persiana', m2(2*h), 'm');
+      add('Eixo, rolo e suportes da persiana', 1, 'kit');
+      add('Acionamento da persiana (fita/manivela ou motor — conforme obs.)', 1, 'kit');
+    }
   } else if (tipo==='jguil'){
     add(`Perfil de alumínio ${cor} — folhas guilhotina`, m2(2*(w+h)), 'm');
     add('Fecho borboleta + puxadores', 1, 'kit');
